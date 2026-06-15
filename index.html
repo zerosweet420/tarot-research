@@ -2718,8 +2718,8 @@ function buildPendingView() {
     else if(od>0) overdueList.push(r);
     else soonList.push(r);
   });
-  overdueList.sort((a,b)=>(dueDays(b)||0)-(dueDays(a)||0));
-  soonList.sort((a,b)=>(dueDays(a)||0)-(dueDays(b)||0));
+  overdueList.sort((a,b)=>(dueDays(b)||0)-(dueDays(a)||0));  // 超期最多的排最上
+  soonList.sort((a,b)=>(dueDays(a)||0)-(dueDays(b)||0));      // 最快到期的排最上
 
   const container = document.getElementById('val-pending-view');
   let html = '';
@@ -2761,6 +2761,7 @@ function buildValItem(reading) {
     <div class="val-item-body">
       <div class="val-reading-preview">
         <div class="vp-label">原始 Reading</div>
+        ${reading.question?`<div class="text-xs text-mist mb-8" style="color:var(--text-2);font-weight:500">${reading.question}</div>`:''}
         <div class="vp-cards">${cardsOneLiner(reading.cards)}</div>
         <div class="flex gap-6 mt-8">${trendBadge(reading.signal?.trend)} </div>
         ${reading.interpretation?.notes?`<div class="text-xs text-mist mt-8" style="border-top:1px solid var(--border);padding-top:8px">${reading.interpretation.notes.slice(0,120)}${reading.interpretation.notes.length>120?'…':''}</div>`:''}
