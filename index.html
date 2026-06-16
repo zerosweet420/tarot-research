@@ -2727,7 +2727,10 @@ function buildReadingItem(r, showStock=false) {
         ${ev.event_date?`<span class="event-date-small">${ev.event_date}</span>`:''}
       </div>`).join('');
     valSection = `<div class="reading-detail-section">
-      <div class="rds-label">驗證結果</div>
+      <div class="rds-label" style="display:flex;align-items:center;justify-content:space-between">
+        驗證結果
+        <button class="btn-edit" style="font-size:10px" onclick="event.stopPropagation();openEditValidation('${val.id}')">編輯驗證</button>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
         ${accuracyBadge(val.accuracy)}
         ${val.outcome?`<span class="text-xs text-mist">${val.outcome}</span>`:''}
@@ -3010,9 +3013,13 @@ function buildRecentView() {
   if (!recent.length) { c.innerHTML='<div class="empty-state" style="margin-top:40px"><div class="empty-icon">📋</div>本週尚無驗證紀錄</div>'; return; }
   c.innerHTML = '<div style="padding-top:16px">'+recent.map(v=>{
     const r=readingById(v.reading_id); const a=r?assetById(r.asset_id):null;
-    return `<div class="all-val-item" onclick="showAssetDetail('${r?.asset_id}')">
+    return `<div class="all-val-item" onclick="openEditValidation('${v.id}')">
       <div style="flex:1">
-        <div class="flex items-center gap-6"><span class="avi-stock">${a?.symbol||''} ${a?.name||''}</span>${accuracyBadge(v.accuracy)}<span class="avi-date">${v.validation_date}</span></div>
+        <div class="flex items-center gap-6">
+          <span class="avi-stock" onclick="event.stopPropagation();showAssetDetail('${r?.asset_id}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-2)">${a?.symbol||''} ${a?.name||''}</span>
+          ${accuracyBadge(v.accuracy)}
+          <span class="avi-date">${v.validation_date}</span>
+        </div>
         ${v.analysis?`<div class="avi-notes">${v.analysis.slice(0,80)}…</div>`:''}
       </div>
     </div>`;
@@ -3025,12 +3032,16 @@ function buildAllView() {
   c.innerHTML = '<div style="padding-top:16px">'+sorted.map(v=>{
     const r=readingById(v.reading_id); const a=r?assetById(r.asset_id):null;
     const text = v.analysis||v.raw_legacy_text||v.notes||'';
-    return `<div class="all-val-item">
-      <div style="flex:1" onclick="showAssetDetail('${r?.asset_id}')">
-        <div class="flex items-center gap-6 flex-wrap"><span class="avi-stock">${a?.symbol||''} ${a?.name||''}</span>${accuracyBadge(v.accuracy)}<span class="avi-date">${v.validation_date||'—'}</span>${(v.model_tags||[]).map(t=>`<span class="rtag" style="font-size:10px">${t}</span>`).join('')}</div>
+    return `<div class="all-val-item" onclick="openEditValidation('${v.id}')">
+      <div style="flex:1">
+        <div class="flex items-center gap-6 flex-wrap">
+          <span class="avi-stock" onclick="event.stopPropagation();showAssetDetail('${r?.asset_id}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-2)">${a?.symbol||''} ${a?.name||''}</span>
+          ${accuracyBadge(v.accuracy)}
+          <span class="avi-date">${v.validation_date||'—'}</span>
+        </div>
         ${text?`<div class="avi-notes">${text.split('\n').join(' ').slice(0,80)}…</div>`:''}
       </div>
-      <div class="edit-actions">
+      <div class="edit-actions" onclick="event.stopPropagation()">
         <button class="btn-edit" onclick="openEditValidation('${v.id}')">編輯</button>
         <button class="btn-delete" onclick="deleteValidation('${v.id}')">刪除</button>
       </div>
