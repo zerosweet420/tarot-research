@@ -2866,8 +2866,10 @@ function buildValItem(reading) {
           <button class="btn-add-event" onclick="openEventModal('${reading.id}')">＋ 新增事件</button>
         </div>
         <div class="form-group mt-16">
-          <label class="form-label">Model Tags <span style="font-size:10px;color:var(--text-3);font-weight:400">（逗號分隔）</span></label>
-          <input class="form-input" type="text" id="model-tags-${reading.id}" placeholder="rm_position_effect, rm_tower_hypothesis">
+          <label class="form-label">Related Models</label>
+          <div class="model-selector" id="model-sel-${reading.id}">
+            ${MODELS.map(m=>`<span class="model-sel-chip" data-mid="${m.id}" onclick="toggleModelChip(this,'${reading.id}')">${categoryBadge(m.category)} ${m.name.split(' ').slice(0,3).join(' ')}</span>`).join('')}
+          </div>
         </div>
         <div class="val-form-actions">
           <button class="btn btn-secondary" onclick="snoozeValItem('${reading.id}')">暫緩</button>
@@ -2880,17 +2882,7 @@ function buildValItem(reading) {
 
 function attachValItemEvents(container) {
   container.querySelectorAll('.val-item-header').forEach(h=>{
-    h.onclick = ()=>{
-      h.parentElement.classList.toggle('expanded');
-      // Populate model selector when expanded
-      if (h.parentElement.classList.contains('expanded')) {
-        const rid = h.parentElement.dataset.rid;
-        const sel = document.getElementById(`model-sel-${rid}`);
-        if (sel && !sel.children.length) {
-          sel.innerHTML = buildModelSelectorChips(rid, []);
-        }
-      }
-    };
+    h.onclick = ()=>{ h.parentElement.classList.toggle('expanded'); };
   });
 }
 
