@@ -1408,6 +1408,64 @@ select option { background: #fff; }
   white-space: nowrap;
 }
 .bdr-draw-date { font-size: 10px; color: var(--text-3); }
+
+/* ── Asset Priority ── */
+.priority-watch   { background: rgba(61,158,122,0.12); color: #3d9e7a; border: 1px solid rgba(61,158,122,0.25); }
+.priority-research{ background: rgba(139,125,216,0.12); color: var(--accent-2); border: 1px solid rgba(139,125,216,0.25); }
+.priority-client  { background: rgba(160,152,144,0.12); color: var(--text-3); border: 1px solid rgba(160,152,144,0.20); }
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Collapsible pending section */
+.pending-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.pending-group-header:hover { color: var(--text-2); }
+.pending-group-toggle { font-size: 10px; transition: transform 0.2s; }
+.pending-group-toggle.collapsed { transform: rotate(-90deg); }
+.pending-group-body { }
+.pending-group-body.hidden { display: none; }
+
+/* Asset grid priority filter */
+.priority-filter-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+/* Assets page: market section headers */
+.asset-market-header {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 14px 0 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
 </style>
 </head>
 <body>
@@ -1552,7 +1610,9 @@ select option { background: #fff; }
       <button class="filter-btn active" onclick="setMarketFilter('all',this)">全部</button>
       <button class="filter-btn" onclick="setMarketFilter('TW',this)">台股</button>
       <button class="filter-btn" onclick="setMarketFilter('US',this)">美股</button>
-      <button class="filter-btn" onclick="setMarketFilter('holding',this)">持倉</button>
+      <button class="filter-btn" style="color:#3d9e7a" onclick="setMarketFilter('watch',this)">● Watch</button>
+      <button class="filter-btn" style="color:var(--accent-2)" onclick="setMarketFilter('research',this)">● Research</button>
+      <button class="filter-btn" style="color:var(--text-3)" onclick="setMarketFilter('client',this)">● Client</button>
       <input class="search-input" id="asset-search" placeholder="搜尋代碼 / 名稱…"
         oninput="filterAssets(this.value)">
     </div>
@@ -2046,6 +2106,14 @@ select option { background: #fff; }
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">分類 Priority</label>
+        <select class="form-select" id="ea-priority">
+          <option value="watch">Watch — 自己持倉或重點追蹤</option>
+          <option value="research">Research — 研究用，偶爾看</option>
+          <option value="client">Client — 幫別人抽的</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label class="form-label">Tags（逗號分隔）</label>
         <input class="form-input" type="text" id="ea-tags" placeholder="AI, 半導體, 大型權值">
       </div>
@@ -2435,6 +2503,12 @@ function evidenceLevelInfo(score) {
   return              {level:0,label:'SEED',pct:10};
 }
 
+function priorityBadge(p) {
+  const map = { watch:'Watch', research:'Research', client:'Client' };
+  const label = map[p] || p || 'Watch';
+  return `<span class="priority-badge priority-${p||'watch'}">${label}</span>`;
+}
+
 const CAT_LABELS = {
   market_structure: '市場結構',
   card_meaning:     '特殊牌',
@@ -2604,12 +2678,16 @@ function buildDashboard() {
     }).join('');
   }
 
-  // ── Urgent Pending ──
+  // ── Urgent Pending - grouped by priority ──
   const pl=document.getElementById('db-pending-list');
   if(!allPending.length){
     pl.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="empty-icon">✅</div>全部已驗證</div>';
   } else {
-    pl.innerHTML=allPending.slice(0,6).map(r=>{
+    const watchPending    = allPending.filter(r=>(assetById(r.asset_id)?.priority||'watch')==='watch');
+    const researchPending = allPending.filter(r=>assetById(r.asset_id)?.priority==='research');
+    const clientPending   = allPending.filter(r=>assetById(r.asset_id)?.priority==='client');
+
+    const renderRow = r => {
       const a=assetById(r.asset_id); const od=dueDays(r);
       const urgency=od===null?`<span class="text-xs text-mist">無截止</span>`
         :od>0?`<span style="font-size:11px;font-weight:600;color:var(--bear)">超期 ${od}d</span>`
@@ -2620,7 +2698,25 @@ function buildDashboard() {
         <span class="badge badge-neutral" style="font-size:10px">${r.time_horizon}</span>
         ${urgency}
       </div>`;
-    }).join('');
+    };
+
+    const renderGroup = (items, label, color, collapsed=false) => {
+      if (!items.length) return '';
+      const gid = 'pg-'+label.toLowerCase();
+      return `<div class="pending-group-header" onclick="togglePendingGroup('${gid}')">
+        <span class="pending-group-toggle ${collapsed?'collapsed':''}" id="${gid}-arrow">▾</span>
+        <span style="color:${color}">${label}</span>
+        <span class="pending-group-count text-mist">${items.length} 筆</span>
+      </div>
+      <div class="pending-group-body ${collapsed?'hidden':''}" id="${gid}-body">
+        ${items.slice(0,8).map(renderRow).join('')}
+      </div>`;
+    };
+
+    pl.innerHTML =
+      renderGroup(watchPending,    'Watch',    '#3d9e7a', false) +
+      renderGroup(researchPending, 'Research', 'var(--accent-2)', true) +
+      renderGroup(clientPending,   'Client',   'var(--text-3)', true);
   }
 
   // ── Research Models Pulse ──
@@ -2706,27 +2802,53 @@ function filterAssets(query) {
   const q = query.toLowerCase();
   const holdingMap = {};
   READINGS.filter(r=>(r.flags||[]).includes('holding')||r.status==='holding').forEach(r=>holdingMap[r.asset_id]=true);
-  let filtered = ASSETS;
+  let filtered = [...ASSETS];
   if (marketFilter==='holding') filtered = filtered.filter(a=>holdingMap[a.id]);
+  else if (marketFilter==='watch') filtered = filtered.filter(a=>(a.priority||'watch')==='watch');
+  else if (marketFilter==='research') filtered = filtered.filter(a=>a.priority==='research');
+  else if (marketFilter==='client') filtered = filtered.filter(a=>a.priority==='client');
   else if (marketFilter!=='all') filtered = filtered.filter(a=>a.market===marketFilter);
   if (q) filtered = filtered.filter(a=>
     a.symbol.toLowerCase().includes(q)||a.name.includes(q)||(a.legal_name||'').includes(q));
+
   const grid = document.getElementById('asset-grid');
   if (!filtered.length) { grid.innerHTML='<div class="empty-state"><div class="empty-icon">◈</div>沒有符合的標的</div>'; return; }
-  grid.innerHTML = filtered.map(a=>{
-    const aR = READINGS.filter(r=>r.asset_id===a.id);
-    const latest = [...aR].sort((a,b)=>b.date.localeCompare(a.date))[0];
-    const tagBadges = (a.tags||[]).slice(0,3).map(t=>`<span class="asset-tag">${t}</span>`).join('');
-    return `<div class="asset-card" onclick="showAssetDetail('${a.id}')">
-      <div class="asset-symbol">${a.symbol} · ${a.market}</div>
-      <div class="asset-name">${a.name}</div>
-      <div class="asset-footer">
-        ${latest?trendBadge(latest.signal?.trend):''}
-        <span class="text-xs text-mist">${aR.length}筆</span>
-        ${tagBadges}
-      </div>
-    </div>`;
-  }).join('');
+
+  // Group by market when showing all
+  const showGrouped = (marketFilter==='all'||marketFilter==='watch'||marketFilter==='research'||marketFilter==='client');
+  if (showGrouped) {
+    const tw = filtered.filter(a=>a.market==='TW');
+    const us = filtered.filter(a=>a.market==='US');
+    let html = '';
+    if (tw.length) {
+      html += `<div class="asset-market-header">🇹🇼 台股 (${tw.length})</div>`;
+      html += tw.map(a=>buildAssetCard(a)).join('');
+    }
+    if (us.length) {
+      html += `<div class="asset-market-header">🇺🇸 美股 (${us.length})</div>`;
+      html += us.map(a=>buildAssetCard(a)).join('');
+    }
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = filtered.map(a=>buildAssetCard(a)).join('');
+  }
+}
+
+function buildAssetCard(a) {
+  const aR = READINGS.filter(r=>r.asset_id===a.id);
+  const latest = [...aR].sort((x,y)=>y.date.localeCompare(x.date))[0];
+  const p = a.priority || 'watch';
+  return `<div class="asset-card" onclick="showAssetDetail('${a.id}')">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <span class="asset-symbol">${a.symbol}</span>
+      ${priorityBadge(p)}
+    </div>
+    <div class="asset-name">${a.name}</div>
+    <div class="asset-footer">
+      ${latest?trendBadge(latest.signal?.trend):''}
+      <span class="text-xs text-mist">${aR.length}筆</span>
+    </div>
+  </div>`;
 }
 
 // ── Asset Detail ──────────────────────────────────
@@ -2747,6 +2869,7 @@ function showAssetDetail(assetId) {
       <span class="asset-info-name">${asset.name}</span>
       <span class="badge badge-neutral">${asset.market}</span>
       <span class="badge badge-neutral">${asset.asset_type}</span>
+      ${priorityBadge(asset.priority||'watch')}
     </div>
     <div class="asset-info-legal">${asset.legal_name||''}</div>
     <div class="asset-info-row">${tagBadges}${flagBadges}</div>
@@ -3600,6 +3723,15 @@ function loadEmbeddedData() {
 }
 
 // ── By Day Overview ──────────────────────────────
+function togglePendingGroup(gid) {
+  const arrow = document.getElementById(gid+'-arrow');
+  const body  = document.getElementById(gid+'-body');
+  if (!body) return;
+  const isHidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !isHidden);
+  if (arrow) arrow.classList.toggle('collapsed', !isHidden);
+}
+
 function buildByDayBlock(targetDate) {
   const picker = document.getElementById('by-day-date-picker');
   if (!targetDate) {
@@ -3891,6 +4023,7 @@ function openAddAsset() {
   document.getElementById('ea-legal').value = '';
   document.getElementById('ea-market').value = 'TW';
   document.getElementById('ea-type').value = 'stock';
+  document.getElementById('ea-priority').value = 'watch';
   document.getElementById('ea-tags').value = '';
   document.getElementById('ea-notes').value = '';
   document.getElementById('edit-asset-modal').classList.add('open');
@@ -3905,6 +4038,7 @@ function openEditAsset(aid) {
   document.getElementById('ea-legal').value = a.legal_name || '';
   document.getElementById('ea-market').value = a.market;
   document.getElementById('ea-type').value = a.asset_type;
+  document.getElementById('ea-priority').value = a.priority || 'watch';
   document.getElementById('ea-tags').value = (a.tags || []).join(', ');
   document.getElementById('ea-notes').value = a.notes || '';
   document.getElementById('edit-asset-modal').classList.add('open');
@@ -3920,6 +4054,7 @@ function saveEditAsset() {
     legal_name: document.getElementById('ea-legal').value.trim(),
     market: document.getElementById('ea-market').value,
     asset_type: document.getElementById('ea-type').value,
+    priority: document.getElementById('ea-priority').value || 'watch',
     tags: document.getElementById('ea-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     notes: document.getElementById('ea-notes').value.trim()
   };
