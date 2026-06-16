@@ -2277,7 +2277,7 @@ function toggleDrivePanel() { navigate('settings'); }
 function markUnsaved() {
   has_unsaved = true;
   const dot = document.getElementById('drive-dot');
-  if (access_token && !dot.classList.contains('syncing')) dot.classList.remove('connected');
+  if (access_token && dot && !dot.classList.contains('syncing')) dot.classList.remove('connected');
 }
 
 // ── Helpers ─────────────────────────────────────
@@ -2466,7 +2466,7 @@ function navigate(page) {
 
   if (page==='research')    searchCards(cardSearchTerm);
   if (page==='validations') buildValidationCenter();
-  if (page==='dashboard')   buildDashboard();
+  if (page==='dashboard')   { try { buildDashboard(); } catch(e) { console.error('Dashboard error:', e); } }
   if (page==='models')      buildModelList();
   if (page==='assets')      buildAssetGrid();
   if (page==='settings')    updateSettingsPage();
@@ -2477,12 +2477,13 @@ function refreshAll() {
   buildAssetGrid();
   buildModelList();
   populateQuickAddAssets();
-  document.getElementById('pending-badge').textContent = getPendingReadings().length;
+  const pb=document.getElementById('pending-badge'); if(pb) pb.textContent=getPendingReadings().length;
 }
 
 // ── Dashboard ────────────────────────────────────
 function buildDashboard() {
-  document.getElementById('db-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const dbDate = document.getElementById('db-date'); if(!dbDate) return;
+  dbDate.textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
   const pending = getPendingReadings();
   const allPending = [...pending].sort((a,b)=>{
     const da=dueDays(a), db2=dueDays(b);
