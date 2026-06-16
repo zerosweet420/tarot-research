@@ -2381,7 +2381,6 @@ function categoryBadge(cat) {
 
 // Migration: convert model_tags/research_tags → related_model_ids on validations
 function migrateData() {
-  let changed = false;
   // Add category to existing models if missing
   const catMap = {
     rm_position_effect:     'position',
@@ -2392,27 +2391,17 @@ function migrateData() {
     rm_regime_risk:         'market_regime',
   };
   MODELS.forEach(m => {
-    if (!m.category) {
-      m.category = catMap[m.id] || 'card_meaning';
-      changed = true;
-    }
-    // Rename counter_examples → counter_evidence_ids
-    if (m.counter_examples && !m.counter_evidence_ids) {
-      m.counter_evidence_ids = m.counter_examples;
-      changed = true;
-    }
+    if (!m.category) m.category = catMap[m.id] || 'card_meaning';
+    if (m.counter_examples && !m.counter_evidence_ids) m.counter_evidence_ids = m.counter_examples;
   });
   // Migrate validations: model_tags → related_model_ids
   const modelIds = new Set(MODELS.map(m => m.id));
   VALIDATIONS.forEach(v => {
     if (!v.related_model_ids) {
-      // Try to get from model_tags first
-      const tags = v.model_tags || [];
-      v.related_model_ids = tags.filter(t => modelIds.has(t));
-      changed = true;
+      v.related_model_ids = (v.model_tags || []).filter(t => modelIds.has(t));
     }
   });
-  if (changed) markUnsaved();
+  // Note: no markUnsaved() here - migration is silent
 }
 
 // Build model selector chips for a validation
@@ -2522,8 +2511,7 @@ function buildDashboard() {
           ${v.validation_date?`<span class="text-xs text-mist">${v.validation_date}</span>`:''}
           ${relModels}
         </div>
-        ${text?`<div style="font-size:12px;color:var(--text-2);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${text.replace(/
-/g,' ').replace(/</g,'&lt;').slice(0,200)}</div>`:'<div class="text-xs text-mist">無分析筆記</div>'}
+        ${text?`<div style="font-size:12px;color:var(--text-2);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${text.split('\n').join(' ').split('<').join('&lt;').slice(0,200)}</div>`:'<div class="text-xs text-mist">無分析筆記</div>'}
       </div>`;
     }).join('');
   }
@@ -2749,7 +2737,7 @@ function buildReadingItem(r, showStock=false) {
         ${(val.related_model_ids||val.model_tags||[]).map(mid=>{const mod=MODELS.find(x=>x.id===mid);return mod?`<span class="related-model-chip" onclick="event.stopPropagation();showModelDetail('${mid}')">${categoryBadge(mod.category)} ${mod.name.split(' ').slice(0,3).join(' ')}</span>`:'';}).join('')}
       </div>`:''}
       ${eventsHtml}
-      ${rawText?`<div class="val-text truncated">${rawText.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div><span class="val-show-more">展開全文</span>`:''}
+      ${rawText?`<div class="val-text truncated">${rawText.split('<').join('&lt;').split('\n').join('<br>')}</div><span class="val-show-more">展開全文</span>`:''}
     </div>`;
   } else {
     const prompt = isOverdue
@@ -2774,7 +2762,7 @@ function buildReadingItem(r, showStock=false) {
     <div class="reading-item-body">
       ${r.question?`<div class="reading-detail-section"><div class="rds-label">Question</div><div class="text-sm text-dim">${r.question}</div></div>`:''}
       <div class="reading-detail-section"><div class="rds-label">Cards</div><div class="cards-list">${cardsHtml}</div></div>
-      ${r.interpretation?.notes?`<div class="reading-detail-section"><div class="rds-label">解讀</div><div class="notes-text">${r.interpretation.notes.replace(/</g,'&lt;')}</div></div>`:''}
+      ${r.interpretation?.notes?`<div class="reading-detail-section"><div class="rds-label">解讀</div><div class="notes-text">${r.interpretation.notes.split('<').join('&lt;')}</div></div>`:''}
       ${(val?.model_tags||[]).length?`<div class="reading-detail-section"><div class="rds-label">Model Tags</div><div class="research-tags">${(val.model_tags||[]).map(t=>`<span class="rtag">${t}</span>`).join('')}</div></div>`:''}
       ${valSection}
     </div>
@@ -3040,7 +3028,7 @@ function buildAllView() {
     return `<div class="all-val-item">
       <div style="flex:1" onclick="showAssetDetail('${r?.asset_id}')">
         <div class="flex items-center gap-6 flex-wrap"><span class="avi-stock">${a?.symbol||''} ${a?.name||''}</span>${accuracyBadge(v.accuracy)}<span class="avi-date">${v.validation_date||'—'}</span>${(v.model_tags||[]).map(t=>`<span class="rtag" style="font-size:10px">${t}</span>`).join('')}</div>
-        ${text?`<div class="avi-notes">${text.replace(/\n/g,' ').slice(0,80)}…</div>`:''}
+        ${text?`<div class="avi-notes">${text.split('\n').join(' ').slice(0,80)}…</div>`:''}
       </div>
       <div class="edit-actions">
         <button class="btn-edit" onclick="openEditValidation('${v.id}')">編輯</button>
