@@ -2484,90 +2484,132 @@ function refreshAll() {
 function buildDashboard() {
   document.getElementById('db-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
   const pending = getPendingReadings();
-  const overdueList = pending.filter(r=>{ const d=dueDays(r); return d!==null&&d>0; })
-    .sort((a,b)=>(dueDays(b)||0)-(dueDays(a)||0));
-
-  document.getElementById('db-pending-num').textContent = pending.length;
-  document.getElementById('db-overdue-num').textContent = overdueList.length;
-  document.getElementById('db-validated-num').textContent = VALIDATIONS.length;
-  document.getElementById('db-reading-total').textContent = READINGS.length;
-  document.getElementById('val-pending-count').textContent = pending.length + ' 筆';
+  const allPending = [...pending].sort((a,b)=>{
+    const da=dueDays(a), db2=dueDays(b);
+    if(da===null&&db2===null) return 0;
+    if(da===null) return 1; if(db2===null) return -1;
+    return db2-da;
+  });
+  document.getElementById('val-pending-count').textContent = pending.length + ' 筆待驗';
   document.getElementById('pending-badge').textContent = pending.length;
 
-  // Pending list
-  const pl = document.getElementById('db-pending-list');
-  if (!overdueList.length) {
-    pl.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="empty-icon">✅</div>目前沒有超期驗證</div>';
+  // ── Recent Validations ──
+  const rvEl = document.getElementById('db-recent-validations');
+  const recentVals = [...VALIDATIONS]
+    .filter(v=>v.accuracy)
+    .sort((a,b)=>{
+      const da=a.validation_date||'', db2=b.validation_date||'';
+      if(da&&db2) return db2.localeCompare(da);
+      if(da) return -1; if(db2) return 1; return 0;
+    })
+    .slice(0,6);
+  if (!recentVals.length) {
+    rvEl.innerHTML = '<div class="empty-state" style="padding:16px 0"><div class="empty-icon">📋</div>尚無驗證紀錄</div>';
   } else {
-    pl.innerHTML = overdueList.slice(0,4).map(r=>{
-      const a = assetById(r.asset_id);
-      const od = dueDays(r);
+    rvEl.innerHTML = recentVals.map(v=>{
+      const r=readingById(v.reading_id); const a=r?assetById(r.asset_id):null;
+      const text = v.analysis||v.raw_legacy_text||'';
+      const relModels=(v.related_model_ids||v.model_tags||[]).slice(0,2).map(mid=>{
+        const m=MODELS.find(x=>x.id===mid);
+        return m?`<span class="model-category cat-${m.category||''}" style="font-size:9px">${m.name.split(' ').slice(0,2).join(' ')}</span>`:'';
+      }).join('');
+      return `<div style="padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showAssetDetail('${r?.asset_id}')">
+        <div class="flex items-center gap-6 mb-4" style="flex-wrap:wrap">
+          ${accuracyBadge(v.accuracy)}
+          <span style="font-size:13px;font-weight:600">${a?.name||''}</span>
+          ${r?`<span class="text-xs text-mist">${r.time_horizon}</span>`:''}
+          ${v.validation_date?`<span class="text-xs text-mist">${v.validation_date}</span>`:''}
+          ${relModels}
+        </div>
+        ${text?`<div style="font-size:12px;color:var(--text-2);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${text.replace(/
+/g,' ').replace(/</g,'&lt;').slice(0,200)}</div>`:'<div class="text-xs text-mist">無分析筆記</div>'}
+      </div>`;
+    }).join('');
+  }
+
+  // ── Urgent Pending ──
+  const pl=document.getElementById('db-pending-list');
+  if(!allPending.length){
+    pl.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="empty-icon">✅</div>全部已驗證</div>';
+  } else {
+    pl.innerHTML=allPending.slice(0,6).map(r=>{
+      const a=assetById(r.asset_id); const od=dueDays(r);
+      const urgency=od===null?`<span class="text-xs text-mist">無截止</span>`
+        :od>0?`<span style="font-size:11px;font-weight:600;color:var(--bear)">超期 ${od}d</span>`
+        :od===0?`<span style="font-size:11px;font-weight:600;color:var(--warn)">今日到期</span>`
+        :`<span class="text-xs text-mist">剩 ${-od}d</span>`;
       return `<div class="pending-row" onclick="navigate('validations')">
-        <span class="pr-stock">${a?.symbol||''} ${a?.name||''}</span>
+        <span class="pr-stock">${a?.name||''}</span>
         <span class="badge badge-neutral" style="font-size:10px">${r.time_horizon}</span>
-        <span class="pr-overdue over">超期 ${od}d</span>
+        ${urgency}
       </div>`;
     }).join('');
   }
 
-  // Market Pulse
-  const mp = document.getElementById('db-market-pulse');
-  const mids = ['asset_tw_index','asset_us_index'];
-  mp.innerHTML = mids.map(aid=>{
-    const a = assetById(aid);
-    const latest = [...READINGS].filter(r=>r.asset_id===aid&&r.signal?.trend).sort((a,b)=>b.date.localeCompare(a.date))[0];
-    return `<div class="market-row" onclick="showAssetDetail('${aid}')">
-      <div><div class="market-name">${a?.name||aid}</div><div class="market-date">${latest?.date||'—'}</div></div>
-      <div class="flex gap-6 items-center">${latest?trendBadge(latest.signal.trend):'<span class="text-xs text-mist">無資料</span>'}</div>
-    </div>`;
-  }).join('');
-
-  // Holdings
-  const hMap = {};
-  READINGS.filter(r=>(r.flags||[]).includes('holding')||r.status==='holding')
-    .forEach(r=>{ if(!hMap[r.asset_id]||r.date>hMap[r.asset_id].date) hMap[r.asset_id]=r; });
-  const hDiv = document.getElementById('db-holdings');
-  if (!Object.keys(hMap).length) {
-    hDiv.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="empty-icon">💼</div>尚無持倉標的</div>';
-  } else {
-    hDiv.innerHTML = Object.entries(hMap).map(([aid,r])=>{
-      const a = assetById(aid);
-      return `<div class="reading-row" onclick="showAssetDetail('${aid}')">
-        <span class="rr-date">${formatDate(r.date)}</span>
-        <span class="rr-stock">${a?.symbol||''} ${a?.name||''}</span>
-        ${trendBadge(r.signal?.trend)} 
+  // ── Research Models Pulse ──
+  const modelsEl=document.getElementById('db-models-pulse');
+  const topModels=[...MODELS].filter(m=>m.status==='active'||m.status==='experimental')
+    .sort((a,b)=>calcModelScore(b)-calcModelScore(a)).slice(0,4);
+  modelsEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+    ${topModels.map(m=>{
+      const score=calcModelScore(m); const lvl=evidenceLevelInfo(score);
+      const ec=m.evidence_reading_ids?.length||0; const vc=countModelValidations(m.id);
+      const hyp=(m.hypothesis||'').slice(0,70)+(m.hypothesis?.length>70?'…':'');
+      return `<div style="background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer" onclick="showModelDetail('${m.id}')">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          ${categoryBadge(m.category)}
+          <span style="font-size:11px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name}</span>
+        </div>
+        ${hyp?`<div style="font-size:11px;color:var(--text-2);line-height:1.5;margin-bottom:8px">${hyp}</div>`:''}
+        <div style="height:3px;background:var(--bg-4);border-radius:2px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;width:${lvl.pct}%;background:linear-gradient(90deg,var(--mint),var(--accent));border-radius:2px"></div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text-3)">
+          <span>佐證 <b style="color:var(--text)">${ec}</b></span>
+          <span>引用 <b style="color:var(--text)">${vc}</b></span>
+          <span style="margin-left:auto;font-weight:700;color:var(--accent)">${lvl.label}</span>
+        </div>
       </div>`;
-    }).join('');
-  }
+    }).join('')}
+  </div>`;
 
-  // Recent
-  const rr = document.getElementById('db-recent');
-  rr.innerHTML = [...READINGS].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7).map(r=>{
-    const a = assetById(r.asset_id);
+  // ── Recent Readings ──
+  const rr=document.getElementById('db-recent');
+  rr.innerHTML=[...READINGS].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(r=>{
+    const a=assetById(r.asset_id); const val=validationForReading(r.id);
     return `<div class="reading-row" onclick="showAssetDetail('${r.asset_id}')">
       <span class="rr-date">${formatDate(r.date)}</span>
-      <span class="rr-stock">${a?.symbol||''} ${a?.name||''}</span>
+      <span class="rr-stock">${a?.name||''}</span>
       <span class="rr-horizon">${r.time_horizon}</span>
-      ${trendBadge(r.signal?.trend)} 
+      ${trendBadge(r.signal?.trend)}
+      ${val?accuracyBadge(val.accuracy):''}
     </div>`;
   }).join('');
 
-  // Research Pulse
-  const activeModels = MODELS.filter(m=>m.status==='active').length;
-  const recentEvidence = MODELS.reduce((s,m)=>{
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
-    const cut = cutoff.toISOString().slice(0,10);
-    return s + (m.evidence_reading_ids||[]).filter(rid=>{ const r=readingById(rid); return r&&r.date>=cut; }).length;
-  },0);
-  const topModel = [...MODELS].sort((a,b)=>calcModelScore(b)-calcModelScore(a))[0];
-  document.getElementById('rp-grid').innerHTML = `
-    <div class="rp-item"><div class="rp-num">${activeModels}</div><div class="rp-label">Active Models</div></div>
-    <div class="rp-item"><div class="rp-num">${recentEvidence}</div><div class="rp-label">近30日佐證</div></div>
-    <div class="rp-item"><div class="rp-num" style="font-size:13px;margin-top:3px">${topModel?.name?.split(' ')[0]||'—'}</div><div class="rp-label">最高分 Model</div></div>
-  `;
+  // ── Holdings ──
+  const hMap={};
+  READINGS.filter(r=>(r.flags||[]).includes('holding')||r.status==='holding')
+    .forEach(r=>{if(!hMap[r.asset_id]||r.date>hMap[r.asset_id].date)hMap[r.asset_id]=r;});
+  const hDiv=document.getElementById('db-holdings');
+  if(!Object.keys(hMap).length){
+    hDiv.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="empty-icon">💼</div>尚無持倉標的</div>';
+  } else {
+    hDiv.innerHTML=Object.entries(hMap).map(([aid,r])=>{
+      const a=assetById(aid);
+      return `<div class="reading-row" onclick="showAssetDetail('${aid}')">
+        <span class="rr-date">${formatDate(r.date)}</span>
+        <span class="rr-stock">${a?.name||''}</span>
+        ${trendBadge(r.signal?.trend)}
+      </div>`;
+    }).join('');
+  }
+
+  // Legacy compat
+  ['db-pending-num','db-overdue-num','db-validated-num','db-reading-total','db-market-pulse','rp-grid'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='';
+  });
 }
 
-// ── Asset Grid ───────────────────────────────────
 function buildAssetGrid() {
   filterAssets(document.getElementById('asset-search')?.value||'');
   document.getElementById('assets-count').textContent = ASSETS.length + ' 個標的';
