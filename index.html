@@ -5,692 +5,284 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>塔羅股票研究系統</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+:root{
+  --bg:#f7f5f0;--bg-card:#ffffff;--bg-hover:#f0ede8;
+  --text:#2c2825;--text-muted:#7a7068;--text-light:#a89f96;
+  --border:#e5e0d8;--border-light:#ede9e3;
+  --lavender:#9b8ec4;--lavender-light:#e8e4f4;--lavender-mid:#c4bbdf;
+  --mint:#7db8a4;--mint-light:#dff0ea;
+  --rose:#d4848a;--rose-light:#f5e2e4;
+  --amber:#d4a76a;--amber-light:#f5eddb;
+  --sky:#7ba5c4;--sky-light:#ddeef7;
+  --shadow-sm:0 1px 3px rgba(44,40,37,.06);
+  --shadow-md:0 4px 12px rgba(44,40,37,.10);
+  --shadow-lg:0 8px 24px rgba(44,40,37,.14);
+  --radius:10px;--radius-sm:6px;--radius-lg:16px;
+  --nav-w:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;display:flex}
 
-  :root {
-    --bg: #f7f5f0;
-    --bg-card: #ffffff;
-    --bg-hover: #f0ede8;
-    --text: #2c2825;
-    --text-muted: #7a7068;
-    --text-light: #a89f96;
-    --border: #e5e0d8;
-    --border-light: #ede9e3;
+/* NAV */
+#nav{width:var(--nav-w);background:var(--bg-card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;padding:20px 0}
+.nav-logo{padding:0 20px 20px;border-bottom:1px solid var(--border-light);margin-bottom:12px}
+.nav-logo h1{font-family:'Crimson Pro',serif;font-size:18px;font-weight:600;color:var(--lavender);line-height:1.3}
+.nav-logo p{font-size:11px;color:var(--text-light);margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13.5px;color:var(--text-muted);transition:background .15s,color .15s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{background:var(--bg-hover);color:var(--text)}
+.nav-item.active{background:var(--lavender-light);color:var(--lavender);border-left-color:var(--lavender);font-weight:500}
+.nav-item.disabled{opacity:.4;pointer-events:none}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-bottom{margin-top:auto;padding:12px 20px 0;border-top:1px solid var(--border-light)}
+.drive-status{font-size:11px;display:flex;align-items:center;gap:6px;color:var(--text-light);padding:6px 0}
+.drive-dot{width:7px;height:7px;border-radius:50%;background:var(--text-light)}
+.drive-dot.connected{background:var(--mint)}
+.drive-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    --lavender: #9b8ec4;
-    --lavender-light: #e8e4f4;
-    --lavender-mid: #c4bbdf;
-    --mint: #7db8a4;
-    --mint-light: #dff0ea;
-    --rose: #d4848a;
-    --rose-light: #f5e2e4;
-    --amber: #d4a76a;
-    --amber-light: #f5eddb;
-    --sky: #7ba5c4;
-    --sky-light: #ddeef7;
+/* MAIN */
+#main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.page-header{height:56px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50}
+.page-header h2{font-family:'Crimson Pro',serif;font-size:22px;font-weight:600}
+.page-header-actions{display:flex;gap:8px;align-items:center}
+.page-content{padding:24px 28px;flex:1}
+.page{display:none}
+.page.active{display:block}
 
-    --priority-watch: #7db8a4;
-    --priority-watch-bg: #dff0ea;
-    --priority-research: #9b8ec4;
-    --priority-research-bg: #e8e4f4;
-    --priority-client: #a89f96;
-    --priority-client-bg: #ede9e3;
+/* GATE SCREEN */
+#gate{display:flex;align-items:center;justify-content:center;min-height:100vh;flex:1}
+.gate-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;text-align:center;max-width:420px;box-shadow:var(--shadow-md)}
+.gate-card .gate-icon{font-size:48px;margin-bottom:20px}
+.gate-card h2{font-family:'Crimson Pro',serif;font-size:26px;font-weight:600;margin-bottom:8px}
+.gate-card p{color:var(--text-muted);font-size:13.5px;margin-bottom:28px;line-height:1.7}
+.gate-loading{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);font-size:13.5px;margin-top:16px}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--lavender);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    --status-overdue: #d4848a;
-    --status-overdue-bg: #f5e2e4;
-    --status-today: #d4a76a;
-    --status-today-bg: #f5eddb;
-    --status-watching: #a89f96;
-    --status-watching-bg: #ede9e3;
-    --status-validated: #7db8a4;
-    --status-validated-bg: #dff0ea;
+/* CARD */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.card-header{padding:14px 18px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:13.5px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.card-body{padding:14px 18px}
 
-    --cat-structure: #7ba5c4;
-    --cat-structure-bg: #ddeef7;
-    --cat-special: #9b8ec4;
-    --cat-special-bg: #e8e4f4;
-    --cat-method: #7db8a4;
-    --cat-method-bg: #dff0ea;
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;line-height:1.6}
+.badge-watch{background:var(--mint-light);color:var(--mint)}
+.badge-research{background:var(--lavender-light);color:var(--lavender)}
+.badge-client{background:var(--border-light);color:var(--text-muted)}
+.badge-bull{background:#dff5e8;color:#52a76f}
+.badge-bear{background:#f5dde0;color:#b85c65}
+.badge-neutral{background:#ede9e3;color:#7a7068}
+.badge-unclear{background:#f0ede8;color:#a89f96}
+.badge-hit{background:#dff5e8;color:#52a76f}
+.badge-partial{background:var(--amber-light);color:#b8894a}
+.badge-miss{background:#f5dde0;color:#b85c65}
+.badge-struct{background:var(--sky-light);color:var(--sky)}
+.badge-special{background:var(--lavender-light);color:var(--lavender)}
+.badge-method{background:var(--mint-light);color:var(--mint)}
+.badge-active{background:#dff5e8;color:#52a76f}
+.badge-experimental{background:var(--amber-light);color:#b8894a}
+.badge-testing{background:var(--lavender-light);color:var(--lavender)}
+.badge-deprecated{background:var(--border-light);color:var(--text-light)}
 
-    --shadow-sm: 0 1px 3px rgba(44,40,37,0.06);
-    --shadow-md: 0 4px 12px rgba(44,40,37,0.10);
-    --shadow-lg: 0 8px 24px rgba(44,40,37,0.14);
-    --radius: 10px;
-    --radius-sm: 6px;
-    --radius-lg: 16px;
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--lavender);color:#fff}
+.btn-primary:hover{background:#8a7db0}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg-hover)}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{background:var(--rose-light);color:var(--rose);border:1px solid #e8c4c6}
+.btn-danger:hover{background:var(--rose);color:#fff}
+.btn-large{padding:12px 28px;font-size:15px;border-radius:var(--radius)}
 
-    --nav-w: 220px;
-    --header-h: 56px;
-  }
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;text-transform:uppercase}
+.form-input,.form-select,.form-textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;font-size:13.5px;transition:border-color .15s,box-shadow .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--lavender);box-shadow:0 0 0 3px rgba(155,142,196,.15);background:#fff}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--lavender);border-bottom-color:var(--lavender)}
+.tab-content{display:none}
+.tab-content.active{display:block}
 
-  body {
-    font-family: 'Noto Sans TC', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.6;
-    min-height: 100vh;
-    display: flex;
-  }
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(44,40,37,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:620px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg-card);z-index:1}
+.modal-header h3{font-family:'Crimson Pro',serif;font-size:20px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);line-height:1;padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:var(--bg-hover)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--bg-card)}
 
-  /* ── NAV ── */
-  #nav {
-    width: var(--nav-w);
-    background: var(--bg-card);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 100;
-    padding: 20px 0;
-  }
-  .nav-logo {
-    padding: 0 20px 20px;
-    border-bottom: 1px solid var(--border-light);
-    margin-bottom: 12px;
-  }
-  .nav-logo h1 {
-    font-family: 'Crimson Pro', serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--lavender);
-    letter-spacing: 0.02em;
-    line-height: 1.3;
-  }
-  .nav-logo p { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 20px;
-    cursor: pointer;
-    font-size: 13.5px;
-    color: var(--text-muted);
-    transition: background 0.15s, color 0.15s;
-    border-left: 3px solid transparent;
-    user-select: none;
-  }
-  .nav-item:hover { background: var(--bg-hover); color: var(--text); }
-  .nav-item.active { 
-    background: var(--lavender-light); color: var(--lavender); 
-    border-left-color: var(--lavender); font-weight: 500;
-  }
-  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
-  .nav-bottom {
-    margin-top: auto;
-    padding: 12px 20px 0;
-    border-top: 1px solid var(--border-light);
-  }
-  .drive-status {
-    font-size: 11px;
-    display: flex; align-items: center; gap: 6px;
-    color: var(--text-light);
-    padding: 6px 0;
-  }
-  .drive-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--text-light);
-  }
-  .drive-dot.connected { background: var(--mint); }
+/* SEARCH & FILTER */
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;flex:1}
+.search-bar input{border:none;outline:none;background:none;font-family:inherit;font-size:13.5px;color:var(--text);flex:1}
+.search-bar input::placeholder{color:var(--text-light)}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.filter-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg-card);color:var(--text-muted);transition:all .15s;font-family:inherit}
+.filter-chip:hover{border-color:var(--lavender);color:var(--lavender)}
+.filter-chip.active{background:var(--lavender-light);color:var(--lavender);border-color:var(--lavender)}
 
-  /* ── MAIN ── */
-  #main {
-    margin-left: var(--nav-w);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  .page-header {
-    height: var(--header-h);
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 28px;
-    position: sticky; top: 0; z-index: 50;
-  }
-  .page-header h2 { 
-    font-family: 'Crimson Pro', serif;
-    font-size: 22px; font-weight: 600; 
-    color: var(--text);
-  }
-  .page-header-actions { display: flex; gap: 8px; align-items: center; }
-  .page-content { padding: 24px 28px; flex: 1; }
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:#2c2825;color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;box-shadow:var(--shadow-md);animation:toast-in .25s ease}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.toast.toast-success::before{content:"✓  ";color:var(--mint)}
+.toast.toast-error::before{content:"✕  ";color:var(--rose)}
+.toast.toast-info::before{content:"→  ";color:var(--lavender)}
 
-  /* ── PAGES ── */
-  .page { display: none; }
-  .page.active { display: block; }
+/* WATCH LIST */
+.watch-row{display:grid;grid-template-columns:90px 1fr 80px 90px 90px 100px;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .12s;font-size:13px;border-left:3px solid transparent}
+.watch-row:last-child{border-bottom:none}
+.watch-row:hover{background:var(--bg-hover)}
+.watch-row.overdue{border-left-color:var(--rose)}
+.watch-row.today{border-left-color:var(--amber)}
+.watch-row.watching{border-left-color:var(--border)}
+.watch-row.validated{border-left-color:var(--mint);opacity:.75}
+.watch-row-hdr{display:grid;grid-template-columns:90px 1fr 80px 90px 90px 100px;align-items:center;gap:10px;padding:8px 16px;background:none;color:var(--text-muted);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.symbol-cell{font-weight:700;font-size:15px;font-family:'Crimson Pro',serif}
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-  }
-  .card-header {
-    padding: 14px 18px 10px;
-    border-bottom: 1px solid var(--border-light);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .card-header h3 {
-    font-size: 13.5px; font-weight: 500; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.06em;
-  }
-  .card-body { padding: 14px 18px; }
+/* ASSET GRID */
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.asset-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.asset-card:hover{box-shadow:var(--shadow-md);border-color:var(--lavender-mid)}
+.asset-symbol{font-family:'Crimson Pro',serif;font-size:22px;font-weight:600;line-height:1.2}
+.asset-name{font-size:12px;color:var(--text-muted);margin-top:2px}
+.market-section{margin-bottom:28px}
+.market-label{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 
-  /* ── BADGES ── */
-  .badge {
-    display: inline-flex; align-items: center;
-    padding: 2px 8px; border-radius: 20px;
-    font-size: 11px; font-weight: 500;
-    line-height: 1.6;
-  }
-  .badge-watch { background: var(--priority-watch-bg); color: var(--priority-watch); }
-  .badge-research { background: var(--priority-research-bg); color: var(--priority-research); }
-  .badge-client { background: var(--priority-client-bg); color: var(--priority-client); }
-  .badge-bull { background: #dff5e8; color: #52a76f; }
-  .badge-bear { background: #f5dde0; color: #b85c65; }
-  .badge-neutral { background: #ede9e3; color: #7a7068; }
-  .badge-unclear { background: #f0ede8; color: #a89f96; }
-  .badge-hit { background: #dff5e8; color: #52a76f; }
-  .badge-partial { background: #f5eddb; color: #b8894a; }
-  .badge-miss { background: #f5dde0; color: #b85c65; }
-  .badge-struct { background: var(--cat-structure-bg); color: var(--cat-structure); }
-  .badge-special { background: var(--cat-special-bg); color: var(--cat-special); }
-  .badge-method { background: var(--cat-method-bg); color: var(--cat-method); }
-  .badge-active { background: #dff5e8; color: #52a76f; }
-  .badge-experimental { background: #f5eddb; color: #b8894a; }
-  .badge-testing { background: var(--lavender-light); color: var(--lavender); }
-  .badge-deprecated { background: var(--border-light); color: var(--text-light); }
+/* VALIDATION */
+.val-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px}
+.val-item-hdr{display:grid;grid-template-columns:90px 1fr 80px 90px 90px 100px;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .12s;font-size:13px}
+.val-item-hdr:hover{background:var(--bg-hover)}
+.val-item-body{display:none;border-top:1px solid var(--border-light);padding:16px;background:#fdfcfa}
+.val-item-body.open{display:block}
 
-  /* ── BUTTONS ── */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: var(--radius-sm);
-    font-size: 13px; font-weight: 500; cursor: pointer;
-    border: none; transition: all 0.15s; font-family: inherit;
-  }
-  .btn-primary { background: var(--lavender); color: white; }
-  .btn-primary:hover { background: #8a7db0; }
-  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: var(--bg-hover); }
-  .btn-ghost { background: transparent; color: var(--text-muted); }
-  .btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn-danger { background: var(--rose-light); color: var(--rose); border: 1px solid #e8c4c6; }
-  .btn-danger:hover { background: var(--rose); color: white; }
+/* READING ITEM */
+.reading-item{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px}
+.reading-item-hdr{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .12s}
+.reading-item-hdr:hover{background:var(--bg-hover)}
+.reading-item-body{display:none;border-top:1px solid var(--border-light);padding:14px;background:#fdfcfa}
+.reading-item-body.open{display:block}
+.cards-display{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.card-chip{padding:3px 9px;background:var(--lavender-light);color:var(--lavender);border-radius:6px;font-size:12px;font-weight:500}
+.card-chip.rev{background:var(--rose-light);color:var(--rose)}
 
-  /* ── FORM ── */
-  .form-group { margin-bottom: 14px; }
-  .form-label { 
-    display: block; font-size: 12px; font-weight: 500;
-    color: var(--text-muted); margin-bottom: 5px;
-    letter-spacing: 0.03em; text-transform: uppercase;
-  }
-  .form-input, .form-select, .form-textarea {
-    width: 100%; padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text);
-    font-family: inherit; font-size: 13.5px;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
-    border-color: var(--lavender);
-    box-shadow: 0 0 0 3px rgba(155,142,196,0.15);
-    background: white;
-  }
-  .form-textarea { resize: vertical; min-height: 80px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+/* MODEL */
+.model-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.model-card:hover{box-shadow:var(--shadow-md);border-color:var(--lavender-mid)}
+.model-section{margin-bottom:28px}
+.model-section-label{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:var(--lavender);transition:width .3s}
 
-  /* ── TABS ── */
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .tab-btn {
-    padding: 8px 16px; cursor: pointer;
-    font-size: 13px; font-weight: 500; color: var(--text-muted);
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    transition: color 0.15s, border-color 0.15s;
-    background: none; border-top: none; border-left: none; border-right: none;
-    font-family: inherit;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--lavender); border-bottom-color: var(--lavender); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+/* CARD EXPLORER */
+.card-stat-row{display:grid;grid-template-columns:160px 1fr 70px 70px 70px;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border-light);font-size:13px}
+.card-stat-row:hover{background:var(--bg-hover);cursor:pointer}
+.card-stat-row.hdr{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;cursor:default}
+.card-stat-row.hdr:hover{background:none}
+.mini-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden}
+.mini-bar-fill{height:100%;background:var(--mint);border-radius:3px}
+.hit-rate{font-weight:600;color:var(--mint)}
+.miss-rate{color:var(--rose)}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(44,40,37,0.45);
-    z-index: 200;
-    display: none; align-items: center; justify-content: center;
-    padding: 24px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    width: 100%; max-width: 620px;
-    max-height: 90vh;
-    overflow-y: auto;
-    display: flex; flex-direction: column;
-  }
-  .modal-header {
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; background: var(--bg-card);
-  }
-  .modal-header h3 {
-    font-family: 'Crimson Pro', serif;
-    font-size: 20px; font-weight: 600;
-  }
-  .modal-close {
-    background: none; border: none; cursor: pointer;
-    font-size: 20px; color: var(--text-muted); line-height: 1;
-    padding: 2px 6px; border-radius: 4px;
-  }
-  .modal-close:hover { background: var(--bg-hover); }
-  .modal-body { padding: 20px 24px; }
-  .modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid var(--border);
-    display: flex; gap: 8px; justify-content: flex-end;
-    position: sticky; bottom: 0; background: var(--bg-card);
-  }
+/* SETTINGS */
+.settings-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.settings-section-title{padding:14px 18px;font-weight:500;font-size:14px;border-bottom:1px solid var(--border-light);background:var(--bg)}
+.settings-row{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-light);font-size:13.5px}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{color:var(--text-muted);font-size:12px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 18px}
+.stat-box{text-align:center}
+.stat-number{font-family:'Crimson Pro',serif;font-size:28px;font-weight:600;color:var(--lavender)}
+.stat-box-label{font-size:11px;color:var(--text-light);margin-top:2px}
 
-  /* ── SEARCH & FILTER ── */
-  .search-bar {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 7px 12px;
-    flex: 1;
-  }
-  .search-bar input {
-    border: none; outline: none; background: none;
-    font-family: inherit; font-size: 13.5px; color: var(--text);
-    flex: 1;
-  }
-  .search-bar input::placeholder { color: var(--text-light); }
-  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-  .filter-chip {
-    padding: 5px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 500; cursor: pointer;
-    border: 1px solid var(--border); background: var(--bg-card);
-    color: var(--text-muted); transition: all 0.15s;
-    font-family: inherit;
-  }
-  .filter-chip:hover { border-color: var(--lavender); color: var(--lavender); }
-  .filter-chip.active { 
-    background: var(--lavender-light); color: var(--lavender);
-    border-color: var(--lavender);
-  }
-
-  /* ── TOAST ── */
-  #toast-container {
-    position: fixed; bottom: 24px; right: 24px;
-    z-index: 999; display: flex; flex-direction: column; gap: 8px;
-  }
-  .toast {
-    background: #2c2825; color: white;
-    padding: 10px 16px; border-radius: var(--radius-sm);
-    font-size: 13px;
-    box-shadow: var(--shadow-md);
-    animation: toast-in 0.25s ease;
-  }
-  @keyframes toast-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .toast.toast-success::before { content: '✓  '; color: var(--mint); }
-  .toast.toast-error::before { content: '✕  '; color: var(--rose); }
-  .toast.toast-info::before { content: '→  '; color: var(--lavender); }
-
-  /* ── DASHBOARD ── */
-  .watch-row {
-    display: grid;
-    grid-template-columns: 90px 1fr 80px 90px 90px 100px;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border-light);
-    cursor: pointer;
-    transition: background 0.12s;
-    font-size: 13px;
-  }
-  .watch-row:last-child { border-bottom: none; }
-  .watch-row:hover { background: var(--bg-hover); }
-  .watch-row.overdue { border-left: 3px solid var(--rose); }
-  .watch-row.today { border-left: 3px solid var(--amber); }
-  .watch-row.watching { border-left: 3px solid var(--border); }
-  .watch-row.validated { border-left: 3px solid var(--mint); opacity: 0.7; }
-  .watch-row-header {
-    grid-template-columns: 90px 1fr 80px 90px 90px 100px;
-    background: none; cursor: default; 
-    color: var(--text-muted); font-size: 11px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    padding: 8px 16px;
-  }
-  .watch-row-header:hover { background: none; }
-  .symbol-cell { font-weight: 700; font-size: 15px; font-family: 'Crimson Pro', serif; }
-  .date-cell { color: var(--text-muted); }
-  .watch-row.overdue .date-cell { color: var(--rose); font-weight: 500; }
-  .watch-row.today .date-cell { color: var(--amber); font-weight: 500; }
-
-  /* ── ASSET GRID ── */
-  .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-  .asset-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: box-shadow 0.15s, border-color 0.15s;
-  }
-  .asset-card:hover { box-shadow: var(--shadow-md); border-color: var(--lavender-mid); }
-  .asset-card-top { display: flex; align-items: flex-start; justify-content: space-between; }
-  .asset-symbol { font-family: 'Crimson Pro', serif; font-size: 22px; font-weight: 600; line-height: 1.2; }
-  .asset-name { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .asset-meta { display: flex; gap: 6px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
-  .asset-stats { margin-top: 8px; font-size: 12px; color: var(--text-light); }
-  .market-section { margin-bottom: 28px; }
-  .market-label {
-    font-size: 12px; font-weight: 500; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  /* ── VALIDATION TABLE ── */
-  .val-list { display: flex; flex-direction: column; gap: 8px; }
-  .val-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .val-item-header {
-    display: grid;
-    grid-template-columns: 90px 1fr 80px 90px 90px 100px;
-    align-items: center; gap: 10px;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: background 0.12s;
-    font-size: 13px;
-  }
-  .val-item-header:hover { background: var(--bg-hover); }
-  .val-item-body {
-    display: none;
-    border-top: 1px solid var(--border-light);
-    padding: 16px;
-    background: #fdfcfa;
-  }
-  .val-item-body.open { display: block; }
-  .val-badge-overdue { color: var(--rose); }
-  .val-badge-today { color: var(--amber); }
-  .val-badge-soon { color: var(--text-muted); }
-
-  /* ── READING CARD IN ASSET DETAIL ── */
-  .reading-item {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .reading-item-header {
-    padding: 10px 14px;
-    display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; transition: background 0.12s;
-  }
-  .reading-item-header:hover { background: var(--bg-hover); }
-  .reading-item-body {
-    display: none;
-    border-top: 1px solid var(--border-light);
-    padding: 14px;
-    background: #fdfcfa;
-  }
-  .reading-item-body.open { display: block; }
-  .cards-display { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-  .card-chip {
-    padding: 4px 10px;
-    background: var(--lavender-light);
-    color: var(--lavender);
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-  .card-chip.reversed { background: var(--rose-light); color: var(--rose); }
-
-  /* ── RESEARCH MODELS ── */
-  .model-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: box-shadow 0.15s, border-color 0.15s;
-  }
-  .model-card:hover { box-shadow: var(--shadow-md); border-color: var(--lavender-mid); }
-  .model-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-  .model-name { font-weight: 600; font-size: 15px; }
-  .model-id { font-size: 11px; color: var(--text-light); font-family: monospace; margin-top: 2px; }
-  .model-hypo { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
-  .model-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-  .progress-bar {
-    height: 4px; background: var(--border);
-    border-radius: 2px; margin-top: 12px; overflow: hidden;
-  }
-  .progress-fill { height: 100%; border-radius: 2px; background: var(--lavender); transition: width 0.3s; }
-  .model-evidence { font-size: 11px; color: var(--text-light); margin-top: 6px; }
-  .model-section { margin-bottom: 28px; }
-  .model-section-label {
-    font-size: 12px; font-weight: 500; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-  }
-
-  /* ── CARD EXPLORER ── */
-  .card-stat-row {
-    display: grid;
-    grid-template-columns: 140px 1fr 80px 80px 80px;
-    align-items: center; gap: 12px;
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 13px;
-  }
-  .card-stat-row:hover { background: var(--bg-hover); cursor: pointer; }
-  .card-stat-row.header { 
-    font-size: 11px; color: var(--text-muted); font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    cursor: default;
-  }
-  .card-stat-row.header:hover { background: none; }
-  .hit-rate { font-weight: 600; color: var(--mint); }
-  .miss-rate { font-weight: 600; color: var(--rose); }
-  .mini-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; width: 80px; }
-  .mini-bar-fill { height: 100%; background: var(--mint); border-radius: 3px; }
-
-  /* ── DETAIL PANEL ── */
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .detail-field { margin-bottom: 14px; }
-  .detail-label { font-size: 11px; font-weight: 500; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-  .detail-value { font-size: 14px; color: var(--text); }
-  .detail-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
-
-  /* ── SETTINGS ── */
-  .settings-section { 
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  .settings-section-title {
-    padding: 14px 18px;
-    font-weight: 500; font-size: 14px;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg);
-  }
-  .settings-row {
-    padding: 12px 18px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 13.5px;
-  }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-row-label { color: var(--text-muted); font-size: 12px; }
-  .stat-number { font-family: 'Crimson Pro', serif; font-size: 28px; font-weight: 600; color: var(--lavender); }
-  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px 18px; }
-  .stat-box { text-align: center; }
-  .stat-box-label { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-
-  /* ── DATE PICKER ── */
-  .date-nav { display: flex; align-items: center; gap: 8px; }
-  .date-nav button {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 4px 8px;
-    cursor: pointer; font-size: 13px; font-family: inherit;
-    color: var(--text-muted);
-  }
-  .date-nav button:hover { background: var(--bg-hover); }
-  .date-nav .date-display {
-    font-size: 13px; font-weight: 500;
-    padding: 4px 12px;
-    background: var(--lavender-light); color: var(--lavender);
-    border-radius: var(--radius-sm);
-  }
-
-  /* ── CHIP MULTI-SELECT ── */
-  .chip-select { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip-option {
-    padding: 4px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 500; cursor: pointer;
-    border: 1px solid var(--border); background: var(--bg);
-    color: var(--text-muted); transition: all 0.15s; font-family: inherit;
-  }
-  .chip-option:hover { border-color: var(--lavender); color: var(--lavender); }
-  .chip-option.selected { background: var(--lavender-light); color: var(--lavender); border-color: var(--lavender); }
-
-  /* ── CARDS IN FORM ── */
-  .card-entry {
-    display: grid; grid-template-columns: 1fr 100px 32px;
-    gap: 8px; align-items: center; margin-bottom: 8px;
-  }
-  .key-event-entry {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    position: relative;
-  }
-
-  /* ── SECTION DIVIDER ── */
-  .section-label {
-    font-size: 11px; font-weight: 600; color: var(--text-light);
-    text-transform: uppercase; letter-spacing: 0.1em;
-    margin: 20px 0 12px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-label::after {
-    content: ''; flex: 1; height: 1px; background: var(--border-light);
-  }
-
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    text-align: center; padding: 48px 24px;
-    color: var(--text-light);
-  }
-  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
-  .empty-state h3 { font-size: 15px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
-  .empty-state p { font-size: 13px; }
-
-  /* ── DETAIL BACK ── */
-  .detail-back { 
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; color: var(--text-muted); cursor: pointer;
-    margin-bottom: 16px;
-  }
-  .detail-back:hover { color: var(--lavender); }
-
-  /* util */
-  .flex { display: flex; }
-  .flex-col { flex-direction: column; }
-  .gap-8 { gap: 8px; }
-  .gap-12 { gap: 12px; }
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .mt-4 { margin-top: 4px; }
-  .mt-8 { margin-top: 8px; }
-  .mt-12 { margin-top: 12px; }
-  .mt-16 { margin-top: 16px; }
-  .mb-8 { margin-bottom: 8px; }
-  .mb-12 { margin-bottom: 12px; }
-  .mb-16 { margin-bottom: 16px; }
-  .text-muted { color: var(--text-muted); }
-  .text-light { color: var(--text-light); }
-  .font-mono { font-family: monospace; }
-  .text-sm { font-size: 12px; }
-  .bold { font-weight: 600; }
-  hr.divider { border: none; border-top: 1px solid var(--border-light); margin: 14px 0; }
+/* MISC */
+.date-nav{display:flex;align-items:center;gap:8px}
+.date-nav button{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;cursor:pointer;font-size:13px;font-family:inherit;color:var(--text-muted)}
+.date-nav button:hover{background:var(--bg-hover)}
+.date-display{font-size:13px;font-weight:500;padding:4px 12px;background:var(--lavender-light);color:var(--lavender);border-radius:var(--radius-sm)}
+.chip-select{display:flex;flex-wrap:wrap;gap:6px}
+.chip-option{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);transition:all .15s;font-family:inherit}
+.chip-option:hover{border-color:var(--lavender);color:var(--lavender)}
+.chip-option.selected{background:var(--lavender-light);color:var(--lavender);border-color:var(--lavender)}
+.card-entry{display:grid;grid-template-columns:1fr 100px 32px;gap:8px;align-items:center;margin-bottom:8px}
+.key-event-entry{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px}
+.section-label{font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border-light)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-light)}
+.empty-state .icon{font-size:36px;margin-bottom:12px}
+.empty-state h3{font-size:15px;color:var(--text-muted);margin-bottom:6px;font-weight:500}
+.detail-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;margin-bottom:16px}
+.detail-back:hover{color:var(--lavender)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.detail-field{margin-bottom:12px}
+.detail-label{font-size:11px;font-weight:500;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.detail-value{font-size:14px;color:var(--text)}
+.legacy-text{font-size:12.5px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;margin-top:4px}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tag{padding:2px 7px;background:var(--bg-hover);color:var(--text-muted);border-radius:4px;font-size:11px}
+hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-6{gap:6px}.gap-8{gap:8px}.gap-12{gap:12px}
+.mt-4{margin-top:4px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.text-muted{color:var(--text-muted)}.text-light{color:var(--text-light)}
+.text-sm{font-size:12px}.bold{font-weight:600}.font-mono{font-family:monospace}
 </style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav id="nav">
-  <div class="nav-logo">
-    <h1>🃏 塔羅研究</h1>
-    <p>Stock Research System</p>
-  </div>
-  <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
-    <span class="icon">🏠</span> Dashboard
-  </div>
-  <div class="nav-item" onclick="showPage('assets')" data-page="assets">
-    <span class="icon">📊</span> 標的管理
-  </div>
-  <div class="nav-item" onclick="showPage('readings')" data-page="readings">
-    <span class="icon">🃏</span> 新增占卜
-  </div>
-  <div class="nav-item" onclick="showPage('validation')" data-page="validation">
-    <span class="icon">✅</span> 驗證中心
-  </div>
-  <div class="nav-item" onclick="showPage('explorer')" data-page="explorer">
-    <span class="icon">🔍</span> Card Explorer
-  </div>
-  <div class="nav-item" onclick="showPage('models')" data-page="models">
-    <span class="icon">🧪</span> Research Models
-  </div>
-  <div class="nav-item" onclick="showPage('settings')" data-page="settings">
-    <span class="icon">⚙️</span> 設定
-  </div>
+  <div class="nav-logo"><h1>🃏 塔羅研究</h1><p>Stock Research System</p></div>
+  <div class="nav-item" id="nav-dashboard" onclick="showPage('dashboard')" data-page="dashboard"><span class="icon">🏠</span>Dashboard</div>
+  <div class="nav-item" id="nav-assets" onclick="showPage('assets')" data-page="assets"><span class="icon">📊</span>標的管理</div>
+  <div class="nav-item" id="nav-readings" onclick="showPage('readings')" data-page="readings"><span class="icon">🃏</span>新增占卜</div>
+  <div class="nav-item" id="nav-validation" onclick="showPage('validation')" data-page="validation"><span class="icon">✅</span>驗證中心</div>
+  <div class="nav-item" id="nav-explorer" onclick="showPage('explorer')" data-page="explorer"><span class="icon">🔍</span>Card Explorer</div>
+  <div class="nav-item" id="nav-models" onclick="showPage('models')" data-page="models"><span class="icon">🧪</span>Research Models</div>
+  <div class="nav-item" id="nav-settings" onclick="showPage('settings')" data-page="settings"><span class="icon">⚙️</span>設定</div>
   <div class="nav-bottom">
-    <div class="drive-status">
-      <div class="drive-dot" id="drive-dot"></div>
-      <span id="drive-label">未連線</span>
-    </div>
-    <button class="btn btn-sm btn-secondary mt-4" onclick="initiateGoogleAuth()" style="width:100%">
-      連線 Google Drive
-    </button>
+    <div class="drive-status"><div class="drive-dot" id="drive-dot"></div><span id="drive-label">未連線</span></div>
+    <button class="btn btn-sm btn-secondary mt-4" onclick="initiateGoogleAuth()" style="width:100%" id="btn-connect">連線 Google Drive</button>
   </div>
 </nav>
 
 <!-- MAIN -->
 <div id="main">
 
-  <!-- ═══════════════════════════════════════════════════════
-       DASHBOARD
-  ═══════════════════════════════════════════════════════ -->
+  <!-- GATE (shown when not connected) -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="gate-icon">🃏</div>
+      <h2>塔羅股票研究系統</h2>
+      <p>數據儲存於 Google Drive。<br>請先授權連線以載入你的研究紀錄。</p>
+      <button class="btn btn-primary btn-large" onclick="initiateGoogleAuth()">連線 Google Drive</button>
+      <div class="gate-loading" id="gate-loading" style="display:none">
+        <div class="spinner"></div>
+        <span id="gate-loading-text">載入中…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP (shown after connected) -->
+  <div id="app" style="display:none;flex:1;flex-direction:column">
+
+  <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
     <div class="page-header">
       <h2>Dashboard</h2>
@@ -701,73 +293,42 @@
           <button onclick="shiftDate(1)">›</button>
           <button onclick="resetDate()" class="btn btn-sm btn-secondary">今日</button>
         </div>
+        <button class="btn btn-sm btn-ghost" onclick="syncFromDrive()" title="重新從 Drive 同步">↻ 同步</button>
       </div>
     </div>
     <div class="page-content">
-      <!-- Watch List -->
       <div class="card mb-16">
-        <div class="card-header">
-          <h3>📌 Watch 關注清單</h3>
-          <span class="text-sm text-light" id="watch-count"></span>
-        </div>
-        <div>
-          <div class="watch-row watch-row-header">
-            <span>標的</span>
-            <span>問題</span>
-            <span>信號</span>
-            <span>抽牌</span>
-            <span>Target</span>
-            <span>狀態</span>
-          </div>
-          <div id="watch-list-body">
-            <div class="empty-state"><div class="icon">🃏</div><h3>尚無觀察中的占卜</h3><p>在標的管理中新增 Watch 標的並建立占卜紀錄</p></div>
-          </div>
-        </div>
+        <div class="card-header"><h3>📌 Watch 關注清單</h3><span class="text-sm text-light" id="watch-count"></span></div>
+        <div class="watch-row-hdr"><span>標的</span><span>問題</span><span>信號</span><span>抽牌日</span><span>Target</span><span>狀態</span></div>
+        <div id="watch-list-body"></div>
       </div>
-
-      <!-- Models Progress -->
       <div class="card">
-        <div class="card-header">
-          <h3>🧪 Research Models 進展</h3>
-          <button class="btn btn-sm btn-ghost" onclick="showPage('models')">查看全部 →</button>
-        </div>
-        <div class="card-body">
-          <div id="dashboard-models"></div>
-        </div>
+        <div class="card-header"><h3>🧪 Research Models 進展</h3><button class="btn btn-sm btn-ghost" onclick="showPage('models')">查看全部 →</button></div>
+        <div class="card-body" id="dashboard-models"></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       ASSETS
-  ═══════════════════════════════════════════════════════ -->
+  <!-- ASSETS -->
   <div id="page-assets" class="page">
-    <div class="page-header">
-      <h2>標的管理</h2>
-      <div class="page-header-actions">
-        <button class="btn btn-primary" onclick="openModal('modal-asset')">＋ 新增標的</button>
-      </div>
-    </div>
+    <div class="page-header"><h2>標的管理</h2><div class="page-header-actions"><button class="btn btn-primary" onclick="openAssetModal()">＋ 新增標的</button></div></div>
     <div class="page-content">
-      <div class="flex gap-8 mb-12" style="align-items:center">
-        <div class="search-bar" style="max-width:300px">
-          <span>🔍</span>
-          <input type="text" placeholder="搜尋標的…" oninput="renderAssets()" id="asset-search">
-        </div>
+      <div class="flex gap-8 mb-12 items-center">
+        <div class="search-bar" style="max-width:280px"><span>🔍</span><input type="text" placeholder="搜尋標的…" oninput="renderAssets()" id="asset-search"></div>
         <div class="filter-bar" style="margin-bottom:0">
-          <button class="filter-chip active" onclick="setAssetFilter('all',this)">全部</button>
-          <button class="filter-chip" onclick="setAssetFilter('TW',this)">🇹🇼 台股</button>
-          <button class="filter-chip" onclick="setAssetFilter('US',this)">🇺🇸 美股</button>
-          <button class="filter-chip" onclick="setAssetFilter('watch',this)">Watch</button>
-          <button class="filter-chip" onclick="setAssetFilter('research',this)">Research</button>
-          <button class="filter-chip" onclick="setAssetFilter('client',this)">Client</button>
+          <button class="filter-chip active" onclick="setFilter('asset','all',this)">全部</button>
+          <button class="filter-chip" onclick="setFilter('asset','TW',this)">🇹🇼 台股</button>
+          <button class="filter-chip" onclick="setFilter('asset','US',this)">🇺🇸 美股</button>
+          <button class="filter-chip" onclick="setFilter('asset','watch',this)">Watch</button>
+          <button class="filter-chip" onclick="setFilter('asset','research',this)">Research</button>
+          <button class="filter-chip" onclick="setFilter('asset','client',this)">Client</button>
         </div>
       </div>
       <div id="assets-container"></div>
     </div>
   </div>
 
-  <!-- ASSET DETAIL (embedded) -->
+  <!-- ASSET DETAIL -->
   <div id="page-asset-detail" class="page">
     <div class="page-header">
       <h2 id="detail-header-title">標的詳情</h2>
@@ -782,565 +343,253 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       NEW READING (FORM PAGE)
-  ═══════════════════════════════════════════════════════ -->
+  <!-- NEW READING -->
   <div id="page-readings" class="page">
-    <div class="page-header">
-      <h2>新增占卜紀錄</h2>
-    </div>
+    <div class="page-header"><h2>新增占卜紀錄</h2></div>
     <div class="page-content" style="max-width:680px">
-      <div class="card">
-        <div class="card-body">
-          <div class="form-group">
-            <label class="form-label">標的 *</label>
-            <select class="form-select" id="r-asset">
-              <option value="">選擇標的…</option>
+      <div class="card"><div class="card-body">
+        <div class="form-group"><label class="form-label">標的 *</label><select class="form-select" id="r-asset"><option value="">選擇標的…</option></select></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">抽牌日期 *</label><input type="date" class="form-input" id="r-date"></div>
+          <div class="form-group"><label class="form-label">目標日期</label><input type="date" class="form-input" id="r-target-date"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">時間視野</label>
+            <select class="form-select" id="r-horizon">
+              <option value="1D">1D — 當日</option><option value="1W" selected>1W — 一週</option>
+              <option value="3W">3W — 三週</option><option value="1M">1M — 一個月</option>
+              <option value="3M">3M — 三個月</option><option value="6M">6M — 六個月</option>
+              <option value="OPEN">OPEN — 開放</option>
             </select>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">抽牌日期 *</label>
-              <input type="date" class="form-input" id="r-date">
-            </div>
-            <div class="form-group">
-              <label class="form-label">目標日期</label>
-              <input type="date" class="form-input" id="r-target-date">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">時間視野</label>
-              <select class="form-select" id="r-horizon">
-                <option value="1D">1D — 當日</option>
-                <option value="1W" selected>1W — 一週</option>
-                <option value="3W">3W — 三週</option>
-                <option value="1M">1M — 一個月</option>
-                <option value="3M">3M — 三個月</option>
-                <option value="6M">6M — 六個月</option>
-                <option value="OPEN">OPEN — 開放</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">牌陣類型</label>
-              <select class="form-select" id="r-spread">
-                <option value="single">單張</option>
-                <option value="3-card" selected>三張牌</option>
-                <option value="celtic-cross">凱爾特十字</option>
-                <option value="custom">自訂</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">問題</label>
-            <input type="text" class="form-input" id="r-question" placeholder="例：下週走勢方向為何？">
-          </div>
-
-          <div class="section-label">牌組</div>
-          <div id="cards-container"></div>
-          <button class="btn btn-secondary btn-sm mt-4" onclick="addCardEntry()">＋ 新增一張牌</button>
-
-          <div class="section-label mt-12">解讀</div>
-          <div class="form-group">
-            <label class="form-label">解讀方向 *</label>
-            <div class="chip-select" id="r-signal-chips">
-              <button class="chip-option" data-val="bull" onclick="selectSignal(this)">📈 多</button>
-              <button class="chip-option" data-val="bear" onclick="selectSignal(this)">📉 空</button>
-              <button class="chip-option" data-val="neutral" onclick="selectSignal(this)">➡️ 中性</button>
-              <button class="chip-option" data-val="unclear" onclick="selectSignal(this)">❓ 不確定</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">解讀筆記</label>
-            <textarea class="form-textarea" id="r-notes" placeholder="牌義解讀、市場背景、推論邏輯…" style="min-height:120px"></textarea>
-          </div>
-
-          <div class="flex gap-8 mt-16" style="justify-content:flex-end">
-            <button class="btn btn-secondary" onclick="resetReadingForm()">清除</button>
-            <button class="btn btn-primary" onclick="saveReading()">儲存占卜紀錄</button>
+          <div class="form-group"><label class="form-label">牌陣</label>
+            <select class="form-select" id="r-spread">
+              <option value="single">單張</option><option value="3-card" selected>三張牌</option>
+              <option value="celtic-cross">凱爾特十字</option><option value="custom">自訂</option>
+            </select>
           </div>
         </div>
-      </div>
+        <div class="form-group"><label class="form-label">問題</label><input type="text" class="form-input" id="r-question" placeholder="例：下週走勢方向？"></div>
+        <div class="section-label">牌組</div>
+        <div id="cards-container"></div>
+        <button class="btn btn-secondary btn-sm mt-4" onclick="addCardEntry()">＋ 新增一張牌</button>
+        <div class="section-label mt-12">解讀</div>
+        <div class="form-group"><label class="form-label">信號方向 *</label>
+          <div class="chip-select" id="r-signal-chips">
+            <button class="chip-option" data-val="bull" onclick="selectSignal(this)">📈 多</button>
+            <button class="chip-option" data-val="bear" onclick="selectSignal(this)">📉 空</button>
+            <button class="chip-option" data-val="neutral" onclick="selectSignal(this)">➡️ 中性</button>
+            <button class="chip-option" data-val="unclear" onclick="selectSignal(this)">❓ 不確定</button>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">解讀筆記</label><textarea class="form-textarea" id="r-notes" style="min-height:120px" placeholder="牌義解讀、市場背景、推論邏輯…"></textarea></div>
+        <div class="flex gap-8 mt-16 justify-between">
+          <button class="btn btn-secondary" onclick="resetReadingForm()">清除</button>
+          <button class="btn btn-primary" onclick="saveReading()">儲存占卜紀錄</button>
+        </div>
+      </div></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       VALIDATION CENTER
-  ═══════════════════════════════════════════════════════ -->
+  <!-- VALIDATION CENTER -->
   <div id="page-validation" class="page">
-    <div class="page-header">
-      <h2>驗證中心</h2>
-      <div class="page-header-actions">
-        <span class="text-sm text-muted" id="val-pending-count"></span>
-      </div>
-    </div>
+    <div class="page-header"><h2>驗證中心</h2><div class="page-header-actions"><span class="text-sm text-muted" id="val-pending-count"></span></div></div>
     <div class="page-content">
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('val','pending',this)">待驗證</button>
         <button class="tab-btn" onclick="switchTab('val','week',this)">本週完成</button>
         <button class="tab-btn" onclick="switchTab('val','all',this)">全部紀錄</button>
       </div>
-      <div id="val-tab-pending" class="tab-content active">
-        <div id="val-pending-list"></div>
-      </div>
-      <div id="val-tab-week" class="tab-content">
-        <div id="val-week-list"></div>
-      </div>
-      <div id="val-tab-all" class="tab-content">
-        <div id="val-all-list"></div>
-      </div>
+      <div id="val-tab-pending" class="tab-content active"><div id="val-pending-list"></div></div>
+      <div id="val-tab-week" class="tab-content"><div id="val-week-list"></div></div>
+      <div id="val-tab-all" class="tab-content"><div id="val-all-list"></div></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       CARD EXPLORER
-  ═══════════════════════════════════════════════════════ -->
+  <!-- CARD EXPLORER -->
   <div id="page-explorer" class="page">
-    <div class="page-header">
-      <h2>Card Explorer</h2>
-    </div>
+    <div class="page-header"><h2>Card Explorer</h2></div>
     <div class="page-content">
       <div class="flex gap-8 mb-12 items-center">
-        <div class="search-bar" style="max-width:280px">
-          <span>🔍</span>
-          <input type="text" placeholder="搜尋牌名…" oninput="renderExplorer()" id="explorer-search">
-        </div>
+        <div class="search-bar" style="max-width:280px"><span>🔍</span><input type="text" placeholder="搜尋牌名…" oninput="renderExplorer()" id="explorer-search"></div>
         <div class="filter-bar" style="margin-bottom:0">
-          <button class="filter-chip active" onclick="setExplorerFilter('all',this)">全部</button>
-          <button class="filter-chip" onclick="setExplorerFilter('upright',this)">正位</button>
-          <button class="filter-chip" onclick="setExplorerFilter('reversed',this)">逆位</button>
+          <button class="filter-chip active" onclick="setFilter('explorer','all',this)">全部</button>
+          <button class="filter-chip" onclick="setFilter('explorer','upright',this)">正位</button>
+          <button class="filter-chip" onclick="setFilter('explorer','reversed',this)">逆位</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-stat-row header">
-          <span>牌名</span>
-          <span>命中率</span>
-          <span>出現次數</span>
-          <span>命中</span>
-          <span>未中</span>
-        </div>
+        <div class="card-stat-row hdr"><span>牌名</span><span>命中率</span><span>總次</span><span>命中</span><span>未中</span></div>
         <div id="explorer-table"></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       RESEARCH MODELS
-  ═══════════════════════════════════════════════════════ -->
+  <!-- RESEARCH MODELS -->
   <div id="page-models" class="page">
-    <div class="page-header">
-      <h2>Research Models</h2>
-      <div class="page-header-actions">
-        <button class="btn btn-primary" onclick="openModal('modal-model')">＋ 新增 Model</button>
-      </div>
-    </div>
+    <div class="page-header"><h2>Research Models</h2><div class="page-header-actions"><button class="btn btn-primary" onclick="openModelModal()">＋ 新增 Model</button></div></div>
     <div class="page-content">
       <div class="filter-bar mb-16">
-        <button class="filter-chip active" onclick="setModelFilter('current',this)">現行</button>
-        <button class="filter-chip" onclick="setModelFilter('all',this)">全部</button>
-        <button class="filter-chip" onclick="setModelFilter('market_structure',this)">市場結構</button>
-        <button class="filter-chip" onclick="setModelFilter('card_meaning',this)">特殊牌</button>
-        <button class="filter-chip" onclick="setModelFilter('methodology',this)">方法論</button>
-        <button class="filter-chip" onclick="setModelFilter('deprecated',this)">已封存</button>
+        <button class="filter-chip active" onclick="setFilter('model','current',this)">現行</button>
+        <button class="filter-chip" onclick="setFilter('model','all',this)">全部</button>
+        <button class="filter-chip" onclick="setFilter('model','market_structure',this)">市場結構</button>
+        <button class="filter-chip" onclick="setFilter('model','card_meaning',this)">特殊牌</button>
+        <button class="filter-chip" onclick="setFilter('model','methodology',this)">方法論</button>
+        <button class="filter-chip" onclick="setFilter('model','deprecated',this)">已封存</button>
       </div>
       <div id="models-container"></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       SETTINGS
-  ═══════════════════════════════════════════════════════ -->
+  <!-- SETTINGS -->
   <div id="page-settings" class="page">
     <div class="page-header"><h2>設定</h2></div>
     <div class="page-content" style="max-width:680px">
-
       <div class="settings-section">
         <div class="settings-section-title">📡 Google Drive 連線</div>
         <div class="settings-row">
-          <div>
-            <div>連線狀態</div>
-            <div class="settings-row-label" id="settings-drive-detail">未連線 Google Drive</div>
-          </div>
+          <div><div>連線狀態</div><div class="settings-row-label" id="settings-drive-detail">未連線</div></div>
           <div class="flex gap-8">
-            <button class="btn btn-secondary btn-sm" onclick="initiateGoogleAuth()">連線授權</button>
-            <button class="btn btn-ghost btn-sm" onclick="loadFromDrive()">重新載入</button>
+            <button class="btn btn-secondary btn-sm" onclick="initiateGoogleAuth()">重新授權</button>
+            <button class="btn btn-ghost btn-sm" onclick="syncFromDrive()">↻ 重新同步</button>
           </div>
         </div>
-        <div class="settings-row">
-          <div>
-            <div>Client ID</div>
-            <div class="settings-row-label font-mono text-sm">155442549096-e1p3951gb1e2u868e9pkrh16qaqp35qp.apps.googleusercontent.com</div>
-          </div>
-        </div>
+        <div class="settings-row"><div><div>Client ID</div><div class="settings-row-label font-mono text-sm">155442549096-e1p3951gb1e2u868e9pkrh16qaqp35qp.apps.googleusercontent.com</div></div></div>
       </div>
-
       <div class="settings-section">
         <div class="settings-section-title">📊 數據概覽</div>
-        <div class="stat-grid" id="settings-stats">
-          <div class="stat-box"><div class="stat-number" id="stat-assets">0</div><div class="stat-box-label">標的</div></div>
-          <div class="stat-box"><div class="stat-number" id="stat-readings">0</div><div class="stat-box-label">占卜紀錄</div></div>
-          <div class="stat-box"><div class="stat-number" id="stat-validations">0</div><div class="stat-box-label">驗證</div></div>
-          <div class="stat-box"><div class="stat-number" id="stat-models">0</div><div class="stat-box-label">Models</div></div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-number" id="stat-assets">—</div><div class="stat-box-label">標的</div></div>
+          <div class="stat-box"><div class="stat-number" id="stat-readings">—</div><div class="stat-box-label">占卜紀錄</div></div>
+          <div class="stat-box"><div class="stat-number" id="stat-validations">—</div><div class="stat-box-label">驗證</div></div>
+          <div class="stat-box"><div class="stat-number" id="stat-models">—</div><div class="stat-box-label">Models</div></div>
         </div>
       </div>
-
       <div class="settings-section">
-        <div class="settings-section-title">💾 備份與匯出</div>
-        <div class="settings-row">
-          <span>完整備份匯出（JSON）</span>
-          <button class="btn btn-secondary btn-sm" onclick="exportAll()">匯出全部</button>
-        </div>
-        <div class="settings-row">
-          <span>匯入備份</span>
-          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-            選擇檔案 <input type="file" accept=".json" onchange="importBackup(this)" style="display:none">
-          </label>
-        </div>
-        <div class="settings-row">
-          <span>個別匯出 — Assets</span>
-          <button class="btn btn-ghost btn-sm" onclick="exportEntity('assets')">匯出</button>
-        </div>
-        <div class="settings-row">
-          <span>個別匯出 — Readings</span>
-          <button class="btn btn-ghost btn-sm" onclick="exportEntity('readings')">匯出</button>
-        </div>
-        <div class="settings-row">
-          <span>個別匯出 — Validations</span>
-          <button class="btn btn-ghost btn-sm" onclick="exportEntity('validations')">匯出</button>
-        </div>
-        <div class="settings-row">
-          <span>個別匯出 — Research Models</span>
-          <button class="btn btn-ghost btn-sm" onclick="exportEntity('models')">匯出</button>
-        </div>
+        <div class="settings-section-title">💾 本地備份</div>
+        <div class="settings-row"><span>完整備份匯出（JSON）</span><button class="btn btn-secondary btn-sm" onclick="exportAll()">匯出</button></div>
+        <div class="settings-row"><span>從備份匯入（會覆蓋 Drive）</span><label class="btn btn-secondary btn-sm" style="cursor:pointer">選擇檔案<input type="file" accept=".json" onchange="importBackup(this)" style="display:none"></label></div>
       </div>
     </div>
   </div>
 
+  </div><!-- /app -->
 </div><!-- /main -->
 
-<!-- ═══════════════════════════════════════════════════════
-     MODALS
-═══════════════════════════════════════════════════════ -->
-
-<!-- Asset Modal -->
+<!-- MODALS -->
 <div class="modal-overlay" id="modal-asset">
   <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <h3 id="modal-asset-title">新增標的</h3>
-      <button class="modal-close" onclick="closeModal('modal-asset')">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="modal-asset-title">新增標的</h3><button class="modal-close" onclick="closeModal('modal-asset')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="asset-edit-id">
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">代號 *</label>
-          <input type="text" class="form-input" id="asset-symbol" placeholder="2317 / NVDA">
-        </div>
-        <div class="form-group">
-          <label class="form-label">市場 *</label>
-          <select class="form-select" id="asset-market">
-            <option value="TW">🇹🇼 台股</option>
-            <option value="US">🇺🇸 美股</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">代號 *</label><input type="text" class="form-input" id="asset-symbol" placeholder="2317 / NVDA"></div>
+        <div class="form-group"><label class="form-label">市場 *</label><select class="form-select" id="asset-market"><option value="TW">🇹🇼 台股</option><option value="US">🇺🇸 美股</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">名稱 *</label>
-        <input type="text" class="form-input" id="asset-name" placeholder="鴻海">
-      </div>
-      <div class="form-group">
-        <label class="form-label">正式名稱</label>
-        <input type="text" class="form-input" id="asset-legal" placeholder="鴻海精密工業">
-      </div>
+      <div class="form-group"><label class="form-label">名稱 *</label><input type="text" class="form-input" id="asset-name"></div>
+      <div class="form-group"><label class="form-label">正式名稱</label><input type="text" class="form-input" id="asset-legal"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">類型</label>
-          <select class="form-select" id="asset-type">
-            <option value="stock">股票</option>
-            <option value="etf">ETF</option>
-            <option value="crypto">加密貨幣</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">優先級</label>
-          <select class="form-select" id="asset-priority">
-            <option value="watch">Watch — 關注</option>
-            <option value="research">Research — 深研</option>
-            <option value="client">Client — 客戶</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">類型</label><select class="form-select" id="asset-type"><option value="stock">股票</option><option value="etf">ETF</option><option value="index">指數</option></select></div>
+        <div class="form-group"><label class="form-label">優先級</label><select class="form-select" id="asset-priority"><option value="watch">Watch</option><option value="research">Research</option><option value="client">Client</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">備註</label>
-        <textarea class="form-textarea" id="asset-notes" style="min-height:60px" placeholder="相關備註…"></textarea>
-      </div>
+      <div class="form-group"><label class="form-label">備註</label><textarea class="form-textarea" id="asset-notes" style="min-height:60px"></textarea></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-asset')">取消</button>
-      <button class="btn btn-primary" onclick="saveAsset()">儲存</button>
-    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-asset')">取消</button><button class="btn btn-primary" onclick="saveAsset()">儲存</button></div>
   </div>
 </div>
 
-<!-- Validation Modal -->
 <div class="modal-overlay" id="modal-validation">
   <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-val-title">填寫驗證</h3>
-      <button class="modal-close" onclick="closeModal('modal-validation')">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="modal-val-title">填寫驗證</h3><button class="modal-close" onclick="closeModal('modal-validation')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="val-reading-id">
       <input type="hidden" id="val-edit-id">
-      <div id="val-reading-summary" class="card mb-12" style="padding:12px 14px; background:#fdfcfa; font-size:13px">
-      </div>
-
+      <div id="val-reading-summary" class="card mb-12" style="padding:12px 14px;background:#fdfcfa;font-size:13px"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">驗證日期</label>
-          <input type="date" class="form-input" id="val-date">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Accuracy *</label>
-          <select class="form-select" id="val-accuracy">
-            <option value="">選擇…</option>
-            <option value="hit">✓ 命中</option>
-            <option value="partial">△ 部分</option>
-            <option value="miss">✕ 未中</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">驗證日期</label><input type="date" class="form-input" id="val-date"></div>
+        <div class="form-group"><label class="form-label">Accuracy *</label><select class="form-select" id="val-accuracy"><option value="">選擇…</option><option value="hit">✓ 命中</option><option value="partial">△ 部分</option><option value="miss">✕ 未中</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Outcome</label>
-        <select class="form-select" id="val-outcome">
-          <option value="">選擇…</option>
-          <option value="bull_confirmed">📈 Bull Confirmed</option>
-          <option value="bear_confirmed">📉 Bear Confirmed</option>
-          <option value="confirmed">✓ Confirmed</option>
-          <option value="flat">— Flat</option>
-          <option value="mixed">~ Mixed</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">分析筆記</label>
-        <textarea class="form-textarea" id="val-analysis" placeholder="牌義與市場走勢的對照分析…"></textarea>
-      </div>
-
+      <div class="form-group"><label class="form-label">Outcome</label><select class="form-select" id="val-outcome"><option value="">選擇…</option><option value="bull_confirmed">📈 Bull Confirmed</option><option value="bear_confirmed">📉 Bear Confirmed</option><option value="confirmed">✓ Confirmed</option><option value="flat">— Flat</option><option value="mixed">~ Mixed</option></select></div>
+      <div class="form-group"><label class="form-label">分析筆記</label><textarea class="form-textarea" id="val-analysis"></textarea></div>
       <div class="section-label">Key Events</div>
       <div id="key-events-container"></div>
       <button class="btn btn-secondary btn-sm" onclick="addKeyEvent()">＋ 新增事件</button>
-
       <div class="section-label mt-12">Related Models</div>
       <div class="chip-select" id="val-model-chips"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-validation')">取消</button>
-      <button class="btn btn-primary" onclick="saveValidation()">儲存驗證</button>
-    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-validation')">取消</button><button class="btn btn-primary" onclick="saveValidation()">儲存驗證</button></div>
   </div>
 </div>
 
-<!-- Model Modal -->
 <div class="modal-overlay" id="modal-model">
   <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-model-title">新增 Research Model</h3>
-      <button class="modal-close" onclick="closeModal('modal-model')">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="modal-model-title">新增 Research Model</h3><button class="modal-close" onclick="closeModal('modal-model')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="model-edit-id">
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">ID *</label>
-          <input type="text" class="form-input" id="model-id-input" placeholder="rm_my_model">
-        </div>
-        <div class="form-group">
-          <label class="form-label">版本</label>
-          <input type="text" class="form-input" id="model-version" value="1.0">
-        </div>
+        <div class="form-group"><label class="form-label">ID *</label><input type="text" class="form-input" id="model-id-input" placeholder="rm_my_model"></div>
+        <div class="form-group"><label class="form-label">版本</label><input type="text" class="form-input" id="model-version" value="1.0"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">名稱 *</label>
-        <input type="text" class="form-input" id="model-name" placeholder="My Research Model">
-      </div>
+      <div class="form-group"><label class="form-label">名稱 *</label><input type="text" class="form-input" id="model-name"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">分類 *</label>
-          <select class="form-select" id="model-category">
-            <option value="market_structure">市場結構</option>
-            <option value="card_meaning">特殊牌研究</option>
-            <option value="methodology">方法論</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">狀態</label>
-          <select class="form-select" id="model-status">
-            <option value="active">Active</option>
-            <option value="experimental">Experimental</option>
-            <option value="testing">Testing</option>
-            <option value="deprecated">Deprecated</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">分類 *</label><select class="form-select" id="model-category"><option value="market_structure">市場結構</option><option value="card_meaning">特殊牌研究</option><option value="methodology">方法論</option></select></div>
+        <div class="form-group"><label class="form-label">狀態</label><select class="form-select" id="model-status"><option value="active">Active</option><option value="experimental">Experimental</option><option value="testing">Testing</option><option value="deprecated">Deprecated</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">假說</label>
-        <textarea class="form-textarea" id="model-hypothesis" placeholder="核心假說文字…"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">定義</label>
-        <textarea class="form-textarea" id="model-definition" placeholder="詳細定義…"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">版本備注</label>
-        <input type="text" class="form-input" id="model-changelog-note" placeholder="初始建立 / 更新假說…">
-      </div>
+      <div class="form-group"><label class="form-label">假說</label><textarea class="form-textarea" id="model-hypothesis"></textarea></div>
+      <div class="form-group"><label class="form-label">定義</label><textarea class="form-textarea" id="model-definition"></textarea></div>
+      <div class="form-group"><label class="form-label">版本備注</label><input type="text" class="form-input" id="model-changelog-note" placeholder="初始建立 / 更新假說…"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-model')">取消</button>
-      <button class="btn btn-primary" onclick="saveModel()">儲存</button>
-    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-model')">取消</button><button class="btn btn-primary" onclick="saveModel()">儲存</button></div>
   </div>
 </div>
 
-<!-- Toast Container -->
 <div id="toast-container"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
 const CLIENT_ID = '155442549096-e1p3951gb1e2u868e9pkrh16qaqp35qp.apps.googleusercontent.com';
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const REPO = 'zerosweet420/tarot-research';
+const FILE_NAMES = ['assets','readings','validations','models'];
 
-let DB = {
-  assets: [],
-  readings: [],
-  validations: [],
-  models: []
-};
-
-let STATE = {
-  page: 'dashboard',
+// ── STATE ────────────────────────────────────────────────────
+let DB = { assets:[], readings:[], validations:[], models:[] };
+let S = {
   driveToken: null,
+  tokenExpiry: null,
+  fileIds: {},           // entity -> Drive file id cache
+  page: 'dashboard',
   dashDate: new Date(),
   assetFilter: 'all',
   modelFilter: 'current',
   explorerFilter: 'all',
-  currentAssetId: null,
-  editingAssetId: null
+  currentAssetId: null
 };
+let selectedSignal = null;
 
-// ── SEED DATA ─────────────────────────────────────────
-const SEED_MODELS = [
-  { id:'rm_capital_flow', name:'Capital Flow Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'資金流向對應特定牌組，主力進場對應寶劍正位，散戶恐慌對應杯子逆位', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_market_sentiment', name:'Market Sentiment Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'市場情緒由月亮/太陽/愚者等大阿卡納牌呈現，與 VIX 及散戶情緒指數有系統性對應', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_momentum', name:'Momentum Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'戰車、力量等牌代表動能持續，動能衰竭前通常出現命運之輪或吊人', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_consolidation', name:'Consolidation Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'整理期間以星幣牌組為主，漫長整理後突破由魔術師或皇帝牌預示', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_repricing', name:'Repricing Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'重新定價事件（法說會、財報）前後出現審判牌，方向由正逆位決定', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_trend_reversal', name:'Trend Reversal Model', category:'market_structure', status:'active', version:'1.0', hypothesis:'趨勢反轉信號由高塔（急反）或命運之輪（漸轉）區分，逆位加劇不確定性', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_tower_card', name:'Tower Card Hypothesis', category:'card_meaning', status:'active', version:'1.0', hypothesis:'高塔牌出現後通常在 3-5 個交易日內出現急跌或重大利空消息，逆位則延遲或減弱衝擊', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_moon_card', name:'Moon Card Hypothesis', category:'card_meaning', status:'active', version:'1.0', hypothesis:'月亮牌對應資訊不透明期間，往往是主力建倉或法人操作的掩護期，方向難以判斷', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_court_card', name:'Court Card Market Participant', category:'card_meaning', status:'active', version:'1.0', hypothesis:'宮廷牌對應不同市場參與者：國王=大型機構、皇后=法人買盤、騎士=短線主力、侍者=散戶動向', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'1.0',date:'2026-06-16',note:'初始建立'}] },
-  { id:'rm_position_effect_v2', name:'Position Effect Hypothesis v2', category:'methodology', status:'active', version:'2.0', hypothesis:'牌位對牌義的修飾效果：過去位強化基本牌義、現在位呈現動態變化、未來位降低確定性', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'2.0',date:'2026-06-16',note:'從 v1 升版，重新定義位置效果'}] },
-  { id:'rm_reversal_timing_v2', name:'Reversal Timing Hypothesis v2', category:'methodology', status:'active', version:'2.0', hypothesis:'逆位牌表示時間延遲（正常時間框架 x1.5–2x）或方向反轉，以牌義能量強度判斷', definition:'', evidence_reading_ids:[], counter_evidence_ids:[], changelog:[{version:'2.0',date:'2026-06-16',note:'從 v1 升版'}] }
-];
-
-// ═══════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════
+// ── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  loadLocal();
-  if (DB.models.length === 0) { DB.models = SEED_MODELS; saveLocal(); }
-  setTodayDate();
-  renderAll();
-  updateStatsDisplay();
-});
-
-function setTodayDate() {
-  const today = new Date().toISOString().split('T')[0];
-  const rDate = document.getElementById('r-date');
-  if (rDate) rDate.value = today;
-  updateDashDateDisplay();
-}
-
-// ═══════════════════════════════════════════════════════
-// LOCAL STORAGE
-// ═══════════════════════════════════════════════════════
-function saveLocal() {
-  localStorage.setItem('tarot_db', JSON.stringify(DB));
-}
-
-function loadLocal() {
-  const raw = localStorage.getItem('tarot_db');
-  if (raw) {
-    try { DB = JSON.parse(raw); } catch(e) {}
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════════
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const nav = document.querySelector(`[data-page="${name}"]`);
-  if (nav) nav.classList.add('active');
-  STATE.page = name;
-
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'assets') renderAssets();
-  if (name === 'validation') renderValidation();
-  if (name === 'models') renderModels();
-  if (name === 'explorer') renderExplorer();
-  if (name === 'readings') {
-    populateAssetDropdown();
-    if (!document.getElementById('cards-container').children.length) addCardEntry();
-  }
-  updateStatsDisplay();
-}
-
-// ═══════════════════════════════════════════════════════
-// MODALS
-// ═══════════════════════════════════════════════════════
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-  if (id === 'modal-validation') populateModelChips();
-}
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-document.querySelectorAll && document.addEventListener('click', e => {
-  if (e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
+  // Try to restore token from sessionStorage (survives page reload but not new tab)
+  const saved = sessionStorage.getItem('tarot_token');
+  const expiry = sessionStorage.getItem('tarot_token_expiry');
+  if (saved && expiry && Date.now() < parseInt(expiry)) {
+    S.driveToken = saved;
+    S.tokenExpiry = parseInt(expiry);
+    enterApp();
+  } else {
+    checkAuthCallback(); // check if returning from OAuth
   }
 });
 
-// ═══════════════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════════════
-function toast(msg, type='info') {
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-// ═══════════════════════════════════════════════════════
-// ID GENERATION
-// ═══════════════════════════════════════════════════════
-function genId(prefix) {
-  return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-}
-
-// ═══════════════════════════════════════════════════════
-// GOOGLE DRIVE AUTH
-// ═══════════════════════════════════════════════════════
+// ── GOOGLE AUTH ───────────────────────────────────────────────
 function initiateGoogleAuth() {
-  const redirect = encodeURIComponent(window.location.href.split('?')[0]);
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${encodeURIComponent(SCOPE)}`;
+  // Save current hash/path so we can return
+  sessionStorage.setItem('tarot_pre_auth_page', S.page || 'dashboard');
+  const redirect = encodeURIComponent(window.location.href.split('#')[0].split('?')[0]);
+  const url = `https://accounts.google.com/o/oauth2/v2/auth`
+    + `?client_id=${CLIENT_ID}`
+    + `&redirect_uri=${redirect}`
+    + `&response_type=token`
+    + `&scope=${encodeURIComponent(SCOPE)}`
+    + `&prompt=consent`;
   window.location.href = url;
 }
 
@@ -1348,1031 +597,798 @@ function checkAuthCallback() {
   const hash = window.location.hash;
   if (hash && hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
-    STATE.driveToken = params.get('access_token');
-    window.history.replaceState(null, '', window.location.pathname);
-    updateDriveStatus(true);
-    toast('已連線 Google Drive', 'success');
-    loadFromDrive();
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '3600');
+    if (token) {
+      S.driveToken = token;
+      S.tokenExpiry = Date.now() + expiresIn * 1000;
+      sessionStorage.setItem('tarot_token', token);
+      sessionStorage.setItem('tarot_token_expiry', S.tokenExpiry.toString());
+      // Clean URL
+      window.history.replaceState(null, '', window.location.pathname);
+      enterApp();
+    }
   }
 }
 
-function updateDriveStatus(connected) {
+function isTokenValid() {
+  return S.driveToken && S.tokenExpiry && Date.now() < S.tokenExpiry - 60000;
+}
+
+async function enterApp() {
+  if (!isTokenValid()) { showGate(); return; }
+  showGateLoading('連線 Google Drive…');
+  updateDriveStatusUI(true);
+  await syncFromDrive();
+  hideGate();
+}
+
+// ── GATE UI ──────────────────────────────────────────────────
+function showGate() {
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate-loading').style.display = 'none';
+}
+function hideGate() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const returnPage = sessionStorage.getItem('tarot_pre_auth_page') || 'dashboard';
+  showPage(returnPage);
+  updateStats();
+}
+function showGateLoading(text) {
+  document.getElementById('gate-loading').style.display = 'flex';
+  document.getElementById('gate-loading-text').textContent = text;
+}
+
+// ── DRIVE STATUS UI ───────────────────────────────────────────
+function updateDriveStatusUI(ok) {
   const dot = document.getElementById('drive-dot');
   const label = document.getElementById('drive-label');
   const detail = document.getElementById('settings-drive-detail');
-  if (connected) {
-    dot.classList.add('connected');
-    label.textContent = '已連線';
-    if (detail) detail.textContent = 'Google Drive 已授權 (1小時後過期)';
-  } else {
-    dot.classList.remove('connected');
-    label.textContent = '未連線';
-    if (detail) detail.textContent = '未連線 Google Drive，數據儲存在本地';
+  dot.className = 'drive-dot' + (ok ? ' connected' : '');
+  label.textContent = ok ? '已連線' : '未連線';
+  if (detail) {
+    if (ok && S.tokenExpiry) {
+      const mins = Math.round((S.tokenExpiry - Date.now()) / 60000);
+      detail.textContent = `已連線・Token 還有約 ${mins} 分鐘`;
+    } else {
+      detail.textContent = '未連線';
+    }
   }
 }
 
-async function loadFromDrive() {
-  if (!STATE.driveToken) { toast('請先連線 Google Drive', 'error'); return; }
-  toast('從 Drive 載入數據…', 'info');
-  for (const entity of ['assets','readings','validations','models']) {
-    await syncEntityFromDrive(entity);
+// ── DRIVE SYNC (READ) ─────────────────────────────────────────
+async function syncFromDrive() {
+  if (!isTokenValid()) { toast('Token 已過期，請重新授權', 'error'); showGate(); return; }
+  showGateLoading('載入數據中…');
+  updateDriveStatusUI(true);
+  let loaded = 0;
+  for (const entity of FILE_NAMES) {
+    showGateLoading(`載入 ${entity}…`);
+    const ok = await loadEntityFromDrive(entity);
+    if (ok) loaded++;
   }
+  updateStats();
+  if (loaded === 0) toast('Drive 上尚無數據檔案', 'info');
+  else toast(`已同步 ${loaded}/4 個數據檔`, 'success');
+  // Refresh current page
   renderAll();
-  updateStatsDisplay();
-  toast('數據已同步', 'success');
 }
 
-async function syncEntityFromDrive(entity) {
+async function loadEntityFromDrive(entity) {
   try {
     const fileName = `tarot_${entity}.json`;
-    const searchRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'&spaces=appDataFolder,drive`,
-      { headers: { Authorization: `Bearer ${STATE.driveToken}` } }
+    // Search for file
+    const res = await driveFetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'+and+trashed=false&fields=files(id,name,modifiedTime)&spaces=drive`
     );
-    const searchData = await searchRes.json();
-    if (searchData.files && searchData.files.length > 0) {
-      const fileId = searchData.files[0].id;
-      const fileRes = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-        { headers: { Authorization: `Bearer ${STATE.driveToken}` } }
-      );
-      DB[entity] = await fileRes.json();
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.files || data.files.length === 0) return false;
+
+    // Use most recently modified if multiple
+    const file = data.files.sort((a,b) => b.modifiedTime > a.modifiedTime ? 1 : -1)[0];
+    S.fileIds[entity] = file.id;
+
+    const fileRes = await driveFetch(
+      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+    );
+    if (!fileRes.ok) return false;
+    const parsed = await fileRes.json();
+    if (Array.isArray(parsed) && parsed.length >= 0) {
+      DB[entity] = parsed;
+      return true;
     }
-  } catch(e) { console.warn('Drive sync error:', entity, e); }
+    return false;
+  } catch(e) {
+    console.error('Drive load error:', entity, e);
+    return false;
+  }
 }
 
+// ── DRIVE SAVE (WRITE) ────────────────────────────────────────
 async function saveToDrive(entity) {
-  if (!STATE.driveToken) return;
+  if (!isTokenValid()) { toast('Token 已過期，請重新授權', 'error'); return false; }
   try {
     const fileName = `tarot_${entity}.json`;
     const content = JSON.stringify(DB[entity], null, 2);
     const blob = new Blob([content], { type: 'application/json' });
 
-    // search for existing file
-    const searchRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`,
-      { headers: { Authorization: `Bearer ${STATE.driveToken}` } }
-    );
-    const searchData = await searchRes.json();
+    let fileId = S.fileIds[entity];
 
-    if (searchData.files && searchData.files.length > 0) {
-      const fileId = searchData.files[0].id;
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify({name: fileName})], {type:'application/json'}));
-      form.append('file', blob);
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${STATE.driveToken}` },
-        body: form
-      });
-    } else {
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify({name: fileName})], {type:'application/json'}));
-      form.append('file', blob);
-      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${STATE.driveToken}` },
-        body: form
-      });
+    if (!fileId) {
+      // Search first
+      const res = await driveFetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'+and+trashed=false&fields=files(id)&spaces=drive`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.files && data.files.length > 0) fileId = data.files[0].id;
+      }
     }
-  } catch(e) { console.warn('Drive save error:', e); }
+
+    const meta = JSON.stringify({ name: fileName, mimeType: 'application/json' });
+    const form = new FormData();
+    form.append('metadata', new Blob([meta], { type: 'application/json' }));
+    form.append('file', blob);
+
+    let saveRes;
+    if (fileId) {
+      saveRes = await driveFetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+        { method: 'PATCH', body: form }
+      );
+    } else {
+      saveRes = await driveFetch(
+        `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+        { method: 'POST', body: form }
+      );
+    }
+
+    if (saveRes.ok) {
+      const saved = await saveRes.json();
+      S.fileIds[entity] = saved.id;
+      return true;
+    }
+    return false;
+  } catch(e) {
+    console.error('Drive save error:', entity, e);
+    return false;
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-// RENDER ALL
-// ═══════════════════════════════════════════════════════
-function renderAll() {
-  renderDashboard();
-  renderAssets();
-  renderValidation();
-  renderModels();
-  renderExplorer();
+// ── DRIVE FETCH (with auth header) ───────────────────────────
+function driveFetch(url, opts = {}) {
+  return fetch(url, {
+    ...opts,
+    headers: {
+      ...opts.headers,
+      'Authorization': `Bearer ${S.driveToken}`
+    }
+  });
 }
 
-// ═══════════════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════════════
+// ── NAVIGATION ────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('#app .page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + name);
+  if (!pageEl) return;
+  pageEl.classList.add('active');
+  const nav = document.querySelector(`[data-page="${name}"]`);
+  if (nav) nav.classList.add('active');
+  S.page = name;
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'assets') renderAssets();
+  if (name === 'validation') renderValidation();
+  if (name === 'models') renderModels();
+  if (name === 'explorer') renderExplorer();
+  if (name === 'settings') updateDriveStatusUI(isTokenValid());
+  if (name === 'readings') {
+    populateAssetDropdown();
+    if (!document.getElementById('cards-container').children.length) addCardEntry();
+    document.getElementById('r-date').value = todayStr();
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open') });
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function todayStr() { return new Date().toISOString().split('T')[0] }
+function genId(p) { return p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5) }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function signalLabel(s) { return {bull:'📈 多',bear:'📉 空',neutral:'➡️ 中性',unclear:'❓ 不明'}[s]||s }
+function accuracyLabel(a) { return {hit:'✓ 命中',partial:'△ 部分',miss:'✕ 未中'}[a]||a }
+function priorityLabel(p) { return {watch:'Watch',research:'Research',client:'Client'}[p]||p }
+function catBadge(cat) {
+  const m = {market_structure:['badge-struct','市場結構'],card_meaning:['badge-special','特殊牌'],methodology:['badge-method','方法論']};
+  const [c,l] = m[cat] || ['badge-neutral', cat];
+  return `<span class="badge ${c}">${l}</span>`;
+}
+function updateStats() {
+  ['assets','readings','validations','models'].forEach(k => {
+    const el = document.getElementById('stat-' + k);
+    if (el) el.textContent = DB[k].length;
+  });
+}
+function renderAll() { renderDashboard(); renderAssets(); renderValidation(); renderModels(); renderExplorer() }
+
+// ── DASHBOARD ─────────────────────────────────────────────────
 function updateDashDateDisplay() {
+  const d = S.dashDate;
   const el = document.getElementById('dash-date-display');
-  if (!el) return;
-  const d = STATE.dashDate;
-  el.textContent = `${d.getMonth()+1}/${d.getDate()}`;
+  if (el) el.textContent = `${d.getMonth()+1}/${d.getDate()}`;
 }
-
-function shiftDate(delta) {
-  STATE.dashDate.setDate(STATE.dashDate.getDate() + delta);
-  updateDashDateDisplay();
-  renderDashboard();
-}
-function resetDate() {
-  STATE.dashDate = new Date();
-  updateDashDateDisplay();
-  renderDashboard();
-}
+function shiftDate(d) { S.dashDate.setDate(S.dashDate.getDate()+d); updateDashDateDisplay(); renderDashboard() }
+function resetDate() { S.dashDate = new Date(); updateDashDateDisplay(); renderDashboard() }
 
 function renderDashboard() {
+  updateDashDateDisplay();
   renderWatchList();
-  renderDashboardModels();
+  renderDashModels();
 }
 
 function renderWatchList() {
   const body = document.getElementById('watch-list-body');
   const countEl = document.getElementById('watch-count');
   if (!body) return;
+  const today = todayStr();
+  let rows = DB.readings.map(r => ({
+    r, asset: DB.assets.find(a => a.id === r.asset_id),
+    val: DB.validations.find(v => v.reading_id === r.id)
+  })).filter(x => x.asset);
 
-  const today = dateStr(STATE.dashDate);
-  const watchAssets = DB.assets.filter(a => a.priority === 'watch');
+  const sp = ({r, val}) => {
+    if (val) return 3;
+    const td = r.target_date;
+    if (!td) return 2;
+    if (td < today) return 0;
+    if (td === today) return 1;
+    return 2;
+  };
+  rows.sort((a,b) => sp(a)-sp(b) || (a.r.target_date||'9999').localeCompare(b.r.target_date||'9999'));
 
-  // Get all readings for watch assets that are not validated
-  let rows = [];
-  for (const asset of watchAssets) {
-    const assetReadings = DB.readings.filter(r => r.asset_id === asset.id);
-    for (const reading of assetReadings) {
-      const val = DB.validations.find(v => v.reading_id === reading.id);
-      rows.push({ asset, reading, val });
-    }
-  }
-  // Also show readings for any priority if they're recent
-  if (!rows.length) {
-    for (const reading of DB.readings.slice(-20)) {
-      const asset = DB.assets.find(a => a.id === reading.asset_id);
-      if (!asset) continue;
-      const val = DB.validations.find(v => v.reading_id === reading.id);
-      rows.push({ asset, reading, val });
-    }
-  }
-
-  // Sort: overdue > today > watching > validated
-  rows.sort((a, b) => {
-    const statusOrder = r => {
-      const val = r.val;
-      const td = r.reading.target_date;
-      if (val) return 3;
-      if (!td) return 2;
-      if (td < today) return 0;
-      if (td === today) return 1;
-      return 2;
-    };
-    const diff = statusOrder(a) - statusOrder(b);
-    if (diff !== 0) return diff;
-    const ta = a.reading.target_date || '9999';
-    const tb = b.reading.target_date || '9999';
-    return ta.localeCompare(tb);
-  });
-
-  countEl.textContent = `${rows.filter(r => !r.val).length} 筆觀察中`;
+  const pending = rows.filter(x => !x.val).length;
+  if (countEl) countEl.textContent = `${pending} 筆觀察中 · 共 ${rows.length} 筆`;
 
   if (!rows.length) {
-    body.innerHTML = '<div class="empty-state"><div class="icon">📌</div><h3>尚無占卜紀錄</h3><p>新增 Watch 標的後建立占卜紀錄</p></div>';
+    body.innerHTML = '<div class="empty-state"><div class="icon">📌</div><h3>尚無占卜紀錄</h3></div>';
     return;
   }
-
-  body.innerHTML = rows.map(({ asset, reading, val }) => {
-    const td = reading.target_date;
-    let rowClass = 'watching';
-    let dateColor = '';
-    if (val) rowClass = 'validated';
-    else if (td && td < today) rowClass = 'overdue';
-    else if (td === today) rowClass = 'today';
-
-    const signal = reading.signal?.trend || 'unclear';
-    const signalBadge = `<span class="badge badge-${signal}">${signalLabel(signal)}</span>`;
-    const statusBadge = val
+  body.innerHTML = rows.map(({r, asset, val}) => {
+    const td = r.target_date;
+    let rc = 'watching';
+    if (val) rc = 'validated';
+    else if (td && td < today) rc = 'overdue';
+    else if (td === today) rc = 'today';
+    const signal = r.signal?.trend || 'unclear';
+    const stBadge = val
       ? `<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>`
-      : rowClass === 'overdue'
-        ? `<span class="badge" style="background:var(--status-overdue-bg);color:var(--status-overdue)">超期</span>`
-        : rowClass === 'today'
-          ? `<span class="badge" style="background:var(--status-today-bg);color:var(--status-today)">今日</span>`
-          : `<span class="badge badge-neutral">觀察中</span>`;
-
-    return `<div class="watch-row ${rowClass}" onclick="showAssetDetail('${asset.id}')">
-      <span class="symbol-cell">${asset.symbol}</span>
-      <span class="text-muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${reading.question || '—'}</span>
-      <span>${signalBadge}</span>
-      <span class="date-cell">${reading.date || '—'}</span>
-      <span class="date-cell">${td || '—'}</span>
-      <span>${statusBadge}</span>
+      : rc === 'overdue' ? `<span class="badge" style="background:var(--rose-light);color:var(--rose)">超期</span>`
+      : rc === 'today' ? `<span class="badge" style="background:var(--amber-light);color:var(--amber)">今日</span>`
+      : `<span class="badge badge-neutral">觀察中</span>`;
+    return `<div class="watch-row ${rc}" onclick="showAssetDetail('${asset.id}')">
+      <span class="symbol-cell">${esc(asset.symbol)}</span>
+      <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.question||'—')}</span>
+      <span><span class="badge badge-${signal}">${signalLabel(signal)}</span></span>
+      <span class="text-muted">${r.date||'—'}</span>
+      <span class="text-muted ${rc==='overdue'?'bold':''}" style="${rc==='overdue'?'color:var(--rose)':rc==='today'?'color:var(--amber)':''}">${td||'—'}</span>
+      <span>${stBadge}</span>
     </div>`;
   }).join('');
 }
 
-function renderDashboardModels() {
-  const el = document.getElementById('dashboard-models');
-  if (!el) return;
-  const activeModels = DB.models.filter(m => m.status === 'active').slice(0, 6);
-  if (!activeModels.length) {
-    el.innerHTML = '<div class="text-light text-sm">尚無 active models</div>';
-    return;
-  }
-  el.innerHTML = activeModels.map(m => {
-    const evidenceCount = (m.evidence_reading_ids || []).length;
-    const progress = Math.min(100, evidenceCount * 10);
-    const catBadge = categoryBadge(m.category);
-    return `<div style="margin-bottom:12px; cursor:pointer" onclick="showPage('models')">
+function renderDashModels() {
+  const el = document.getElementById('dashboard-models'); if (!el) return;
+  const active = DB.models.filter(m => m.status !== 'deprecated').slice(0, 6);
+  if (!active.length) { el.innerHTML = '<div class="text-light text-sm">尚無 active models</div>'; return; }
+  el.innerHTML = active.map((m,i) => {
+    const ev = (m.evidence_reading_ids||[]).length;
+    const prog = Math.min(100, ev * 10);
+    return `${i>0?'<hr class="div">':''}<div style="cursor:pointer" onclick="showPage('models')">
       <div class="flex items-center justify-between mb-4">
-        <span class="bold" style="font-size:13.5px">${m.name}</span>
-        ${catBadge}
+        <span class="bold" style="font-size:13.5px">${esc(m.name)}</span>
+        <div class="flex gap-6">${catBadge(m.category)}<span class="badge badge-${m.status}">${m.status}</span></div>
       </div>
-      <div class="text-sm text-muted" style="margin-bottom:6px">${m.hypothesis ? m.hypothesis.slice(0,80)+'…' : '—'}</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
-      <div class="model-evidence">佐證 ${evidenceCount} 筆 · 反例 ${(m.counter_evidence_ids||[]).length} 筆</div>
+      ${m.hypothesis?`<div class="text-sm text-muted mb-4">${esc(m.hypothesis.slice(0,90))}${m.hypothesis.length>90?'…':''}</div>`:''}
+      <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+      <div class="text-sm text-light mt-4">佐證 ${ev} 筆 · 反例 ${(m.counter_evidence_ids||[]).length} 筆</div>
     </div>`;
-  }).join('<hr class="divider">');
+  }).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-// ASSETS
-// ═══════════════════════════════════════════════════════
-function setAssetFilter(f, el) {
-  STATE.assetFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  if (el) el.classList.add('active');
-  renderAssets();
+// ── ASSETS ────────────────────────────────────────────────────
+function setFilter(group, f, el) {
+  if (group==='asset') S.assetFilter=f;
+  else if (group==='model') S.modelFilter=f;
+  else if (group==='explorer') S.explorerFilter=f;
+  el.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  if (group==='asset') renderAssets();
+  else if (group==='model') renderModels();
+  else if (group==='explorer') renderExplorer();
 }
-
 function renderAssets() {
-  const container = document.getElementById('assets-container');
-  if (!container) return;
-  const q = (document.getElementById('asset-search')?.value || '').toLowerCase();
-  const f = STATE.assetFilter;
-
+  const c = document.getElementById('assets-container'); if (!c) return;
+  const q = (document.getElementById('asset-search')?.value||'').toLowerCase();
+  const f = S.assetFilter;
   let list = DB.assets.filter(a => {
-    const matchQ = !q || a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q);
-    const matchF = f === 'all' || a.market === f || a.priority === f;
-    return matchQ && matchF;
+    const mq = !q || a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || (a.tags||[]).some(t=>t.toLowerCase().includes(q));
+    const mf = f==='all' || a.market===f || a.priority===f;
+    return mq && mf;
   });
-
-  if (!list.length) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><h3>尚無標的</h3><p>點右上角「＋ 新增標的」開始</p></div>';
-    return;
-  }
-
-  const tw = list.filter(a => a.market === 'TW');
-  const us = list.filter(a => a.market === 'US');
-
+  if (!list.length) { c.innerHTML='<div class="empty-state"><div class="icon">📊</div><h3>尚無標的</h3></div>'; return; }
+  const tw = list.filter(a=>a.market==='TW');
+  const us = list.filter(a=>a.market==='US');
   let html = '';
-  if (tw.length) {
-    html += `<div class="market-section">
-      <div class="market-label">🇹🇼 台股 <span style="color:var(--text-light)">(${tw.length})</span></div>
-      <div class="asset-grid">${tw.map(assetCard).join('')}</div>
-    </div>`;
-  }
-  if (us.length) {
-    html += `<div class="market-section">
-      <div class="market-label">🇺🇸 美股 <span style="color:var(--text-light)">(${us.length})</span></div>
-      <div class="asset-grid">${us.map(assetCard).join('')}</div>
-    </div>`;
-  }
-  container.innerHTML = html;
+  if (tw.length) html += `<div class="market-section"><div class="market-label">🇹🇼 台股 <span style="color:var(--text-light)">(${tw.length})</span></div><div class="asset-grid">${tw.map(assetCard).join('')}</div></div>`;
+  if (us.length) html += `<div class="market-section"><div class="market-label">🇺🇸 美股 <span style="color:var(--text-light)">(${us.length})</span></div><div class="asset-grid">${us.map(assetCard).join('')}</div></div>`;
+  c.innerHTML = html;
 }
-
-function assetCard(asset) {
-  const readings = DB.readings.filter(r => r.asset_id === asset.id);
-  const vals = readings.filter(r => DB.validations.find(v => v.reading_id === r.id));
-  return `<div class="asset-card" onclick="showAssetDetail('${asset.id}')">
-    <div class="asset-card-top">
-      <div>
-        <div class="asset-symbol">${asset.symbol}</div>
-        <div class="asset-name">${asset.name}${asset.legal_name ? ` · ${asset.legal_name}` : ''}</div>
-      </div>
+function assetCard(a) {
+  const rds = DB.readings.filter(r=>r.asset_id===a.id);
+  const vld = rds.filter(r=>DB.validations.find(v=>v.reading_id===r.id));
+  const tags = (a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  return `<div class="asset-card" onclick="showAssetDetail('${a.id}')">
+    <div class="flex items-center justify-between">
+      <div><div class="asset-symbol">${esc(a.symbol)}</div><div class="asset-name">${esc(a.name)}</div></div>
+      <span class="badge badge-${a.priority||'watch'}">${priorityLabel(a.priority||'watch')}</span>
     </div>
-    <div class="asset-meta">
-      <span class="badge badge-${asset.priority}">${priorityLabel(asset.priority)}</span>
-      <span class="badge badge-neutral">${asset.asset_type || 'stock'}</span>
-    </div>
-    <div class="asset-stats">${readings.length} 占卜 · ${vals.length} 已驗證</div>
+    ${tags?`<div class="tags-wrap mt-4">${tags}</div>`:''}
+    <div class="text-sm text-light mt-8">${rds.length} 占卜 · ${vld.length} 已驗證</div>
   </div>`;
 }
-
 function showAssetDetail(assetId) {
-  STATE.currentAssetId = assetId;
-  const asset = DB.assets.find(a => a.id === assetId);
-  if (!asset) return;
-  
+  S.currentAssetId = assetId;
+  const asset = DB.assets.find(a=>a.id===assetId); if (!asset) return;
   document.getElementById('detail-header-title').textContent = `${asset.symbol} · ${asset.name}`;
-  
-  const readings = DB.readings.filter(r => r.asset_id === assetId);
-  const el = document.getElementById('asset-detail-content');
-  
-  const metaHtml = `
-    <div class="card mb-16">
-      <div class="card-body">
-        <div class="detail-grid">
-          <div class="detail-field"><div class="detail-label">代號</div><div class="detail-value" style="font-family:'Crimson Pro',serif;font-size:20px;font-weight:600">${asset.symbol}</div></div>
-          <div class="detail-field"><div class="detail-label">市場</div><div class="detail-value">${asset.market === 'TW' ? '🇹🇼 台股' : '🇺🇸 美股'}</div></div>
-          <div class="detail-field"><div class="detail-label">名稱</div><div class="detail-value">${asset.name}</div></div>
-          <div class="detail-field"><div class="detail-label">優先級</div><div class="detail-value"><span class="badge badge-${asset.priority}">${priorityLabel(asset.priority)}</span></div></div>
-        </div>
-        ${asset.notes ? `<div class="detail-field"><div class="detail-label">備註</div><div class="detail-text">${asset.notes}</div></div>` : ''}
+  const readings = DB.readings.filter(r=>r.asset_id===assetId).slice().reverse();
+  const tags = (asset.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  document.getElementById('asset-detail-content').innerHTML =
+    `<div class="card mb-16"><div class="card-body">
+      <div class="detail-grid">
+        <div class="detail-field"><div class="detail-label">代號</div><div class="detail-value" style="font-family:'Crimson Pro',serif;font-size:22px;font-weight:600">${esc(asset.symbol)}</div></div>
+        <div class="detail-field"><div class="detail-label">市場</div><div class="detail-value">${asset.market==='TW'?'🇹🇼 台股':'🇺🇸 美股'}</div></div>
+        <div class="detail-field"><div class="detail-label">名稱</div><div class="detail-value">${esc(asset.name)}</div></div>
+        <div class="detail-field"><div class="detail-label">優先級</div><div class="detail-value"><span class="badge badge-${asset.priority||'watch'}">${priorityLabel(asset.priority||'watch')}</span></div></div>
       </div>
-    </div>
-  `;
-
-  const readingsHtml = readings.length ? readings.slice().reverse().map(r => {
-    const val = DB.validations.find(v => v.reading_id === r.id);
-    const cards = (r.cards || []).map(c => `<span class="card-chip ${c.orientation==='reversed'?'reversed':''}">${c.card}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
-    const signal = r.signal?.trend || 'unclear';
-    return `<div class="reading-item">
-      <div class="reading-item-header" onclick="toggleExpand(this)">
-        <div class="flex items-center gap-8">
-          <span class="bold" style="font-family:'Crimson Pro',serif">${r.date || '—'}</span>
-          <span class="text-muted text-sm">→ ${r.target_date || '—'}</span>
-          <span class="badge badge-${signal}">${signalLabel(signal)}</span>
-          ${val ? `<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>` : ''}
-        </div>
-        <div class="flex items-center gap-8">
-          <span class="text-sm text-muted">${r.time_horizon||''}</span>
-          <span class="text-muted">›</span>
-        </div>
-      </div>
-      <div class="reading-item-body">
-        ${r.question ? `<div class="mb-8"><span class="text-light text-sm">問題：</span>${r.question}</div>` : ''}
-        <div class="cards-display mb-8">${cards}</div>
-        ${r.interpretation?.notes ? `<div class="text-sm text-muted mb-8">${r.interpretation.notes}</div>` : ''}
-        ${val ? `<hr class="divider">
-          <div class="flex gap-8 items-center mb-4">
-            <span class="bold text-sm">驗證結果</span>
-            <span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>
-            <span class="text-sm text-muted">${val.outcome || ''}</span>
-          </div>
-          ${val.analysis ? `<div class="text-sm text-muted">${val.analysis}</div>` : ''}
-        ` : `<div class="mt-8"><button class="btn btn-sm btn-secondary" onclick="openValidationModal('${r.id}')">填寫驗證</button></div>`}
-      </div>
-    </div>`;
-  }).join('') : '<div class="empty-state"><div class="icon">🃏</div><h3>尚無占卜紀錄</h3></div>';
-
-  el.innerHTML = metaHtml + `
-    <div class="section-label">占卜紀錄 <span style="font-size:11px;color:var(--text-light)">${readings.length} 筆</span></div>
-    ${readingsHtml}`;
-
+      ${tags?`<div class="tags-wrap">${tags}</div>`:''}
+      ${asset.notes?`<div class="text-muted text-sm mt-8">${esc(asset.notes)}</div>`:''}
+    </div></div>
+    <div class="section-label">占卜紀錄 <span style="color:var(--text-light);font-size:11px">${readings.length} 筆</span></div>
+    ${readings.length ? readings.map(r=>readingItem(r)).join('') : '<div class="empty-state"><div class="icon">🃏</div><h3>尚無占卜紀錄</h3></div>'}`;
   showPage('asset-detail');
 }
-
-function toggleExpand(header) {
-  const body = header.nextElementSibling;
-  if (body) body.classList.toggle('open');
+function readingItem(r) {
+  const val = DB.validations.find(v=>v.reading_id===r.id);
+  const cards = (r.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
+  const signal = r.signal?.trend||'unclear';
+  const legacy = r.legacy_id ? `<span class="text-light text-sm font-mono">#${r.legacy_id}</span>` : '';
+  const rTags = (r.research_tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  const flags = (r.flags||[]).map(f=>`<span class="tag">🏷 ${f}</span>`).join('');
+  let valSection = val
+    ? `<hr class="div">
+       <div class="flex items-center gap-8 mb-4">
+         <span class="bold text-sm">驗證結果</span>
+         <span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>
+         ${val.outcome?`<span class="text-sm text-muted">${val.outcome}</span>`:''}
+         ${val.confidence?`<span class="tag">${val.confidence}</span>`:''}
+       </div>
+       ${val.analysis?`<div class="text-sm text-muted mb-8">${esc(val.analysis)}</div>`:''}
+       ${val.raw_legacy_text?`<div class="detail-label mt-8">原始驗證文字</div><div class="legacy-text">${esc(val.raw_legacy_text)}</div>`:''}
+       <button class="btn btn-ghost btn-sm mt-8" onclick="openValidationModal('${r.id}','${val.id}')">✏️ 編輯驗證</button>`
+    : `<div class="mt-8"><button class="btn btn-sm btn-secondary" onclick="openValidationModal('${r.id}')">填寫驗證</button></div>`;
+  return `<div class="reading-item">
+    <div class="reading-item-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
+      <div class="flex items-center gap-8">
+        ${legacy}
+        <span class="bold" style="font-family:'Crimson Pro',serif">${r.date||'—'}</span>
+        <span class="text-muted text-sm">→ ${r.target_date||'—'}</span>
+        <span class="badge badge-${signal}">${signalLabel(signal)}</span>
+        ${val?`<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>`:''}
+      </div>
+      <div class="flex items-center gap-8">
+        <span class="text-sm text-muted">${r.time_horizon||''}</span>
+        ${r.signal?.status?`<span class="tag">${r.signal.status}</span>`:''}
+        <span class="text-muted">›</span>
+      </div>
+    </div>
+    <div class="reading-item-body">
+      ${r.question?`<div class="mb-8"><span class="text-light text-sm">問題：</span>${esc(r.question)}</div>`:''}
+      <div class="cards-display">${cards}</div>
+      ${r.interpretation?.notes?`<div class="text-sm text-muted mt-6">${esc(r.interpretation.notes)}</div>`:''}
+      ${rTags||flags?`<div class="tags-wrap mt-6">${rTags}${flags}</div>`:''}
+      ${valSection}
+    </div>
+  </div>`;
 }
-
 function openAddReadingForAsset() {
-  showPage('readings');
-  populateAssetDropdown();
+  showPage('readings'); populateAssetDropdown();
   const sel = document.getElementById('r-asset');
-  if (sel && STATE.currentAssetId) sel.value = STATE.currentAssetId;
+  if (sel && S.currentAssetId) sel.value = S.currentAssetId;
 }
-
 function editCurrentAsset() {
-  const asset = DB.assets.find(a => a.id === STATE.currentAssetId);
-  if (!asset) return;
-  openAssetModal(asset);
+  const a = DB.assets.find(x=>x.id===S.currentAssetId);
+  if (a) openAssetModal(a);
 }
 
-function openAssetModal(asset=null) {
-  const modal = document.getElementById('modal-asset');
-  document.getElementById('modal-asset-title').textContent = asset ? '編輯標的' : '新增標的';
-  document.getElementById('asset-edit-id').value = asset?.id || '';
-  document.getElementById('asset-symbol').value = asset?.symbol || '';
-  document.getElementById('asset-market').value = asset?.market || 'TW';
-  document.getElementById('asset-name').value = asset?.name || '';
-  document.getElementById('asset-legal').value = asset?.legal_name || '';
-  document.getElementById('asset-type').value = asset?.asset_type || 'stock';
-  document.getElementById('asset-priority').value = asset?.priority || 'watch';
-  document.getElementById('asset-notes').value = asset?.notes || '';
+// ── ASSET MODAL ───────────────────────────────────────────────
+function openAssetModal(a=null) {
+  document.getElementById('modal-asset-title').textContent = a ? '編輯標的' : '新增標的';
+  document.getElementById('asset-edit-id').value = a?.id||'';
+  document.getElementById('asset-symbol').value = a?.symbol||'';
+  document.getElementById('asset-market').value = a?.market||'TW';
+  document.getElementById('asset-name').value = a?.name||'';
+  document.getElementById('asset-legal').value = a?.legal_name||'';
+  document.getElementById('asset-type').value = a?.asset_type||'stock';
+  document.getElementById('asset-priority').value = a?.priority||'watch';
+  document.getElementById('asset-notes').value = a?.notes||'';
   openModal('modal-asset');
 }
-
-function saveAsset() {
+async function saveAsset() {
   const symbol = document.getElementById('asset-symbol').value.trim();
   const name = document.getElementById('asset-name').value.trim();
-  if (!symbol || !name) { toast('代號與名稱為必填', 'error'); return; }
-
+  if (!symbol||!name) { toast('代號與名稱為必填','error'); return; }
   const editId = document.getElementById('asset-edit-id').value;
-  const data = {
-    symbol,
-    name,
+  const data = { symbol, name,
     legal_name: document.getElementById('asset-legal').value.trim(),
     market: document.getElementById('asset-market').value,
     asset_type: document.getElementById('asset-type').value,
     priority: document.getElementById('asset-priority').value,
-    notes: document.getElementById('asset-notes').value.trim(),
-    tags: []
-  };
-
+    notes: document.getElementById('asset-notes').value.trim(), tags: [] };
   if (editId) {
-    const idx = DB.assets.findIndex(a => a.id === editId);
-    if (idx !== -1) DB.assets[idx] = { ...DB.assets[idx], ...data };
-    toast('標的已更新', 'success');
+    const idx = DB.assets.findIndex(a=>a.id===editId);
+    if (idx!==-1) DB.assets[idx] = {...DB.assets[idx],...data};
+    toast('標的已更新','success');
   } else {
-    data.id = genId('asset');
-    DB.assets.push(data);
-    toast('標的已新增', 'success');
+    data.id = genId('asset'); DB.assets.push(data); toast('標的已新增','success');
   }
-
-  saveLocal();
-  saveToDrive('assets');
-  closeModal('modal-asset');
-  renderAssets();
-  updateStatsDisplay();
+  closeModal('modal-asset'); renderAssets(); updateStats();
+  await saveToDrive('assets');
 }
 
+// ── READING FORM ──────────────────────────────────────────────
 function populateAssetDropdown() {
-  const sel = document.getElementById('r-asset');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">選擇標的…</option>' + 
-    DB.assets.map(a => `<option value="${a.id}">${a.symbol} ${a.name}</option>`).join('');
+  const sel = document.getElementById('r-asset'); if (!sel) return;
+  sel.innerHTML = '<option value="">選擇標的…</option>' + DB.assets.map(a=>`<option value="${a.id}">${esc(a.symbol)} ${esc(a.name)}</option>`).join('');
 }
-
-// ═══════════════════════════════════════════════════════
-// READINGS
-// ═══════════════════════════════════════════════════════
-let selectedSignal = null;
-
 function addCardEntry() {
-  const container = document.getElementById('cards-container');
-  const idx = container.children.length + 1;
-  const div = document.createElement('div');
-  div.className = 'card-entry';
-  div.innerHTML = `
-    <input type="text" class="form-input card-name" placeholder="牌名（例：命運之輪）">
-    <select class="form-select card-orient">
-      <option value="upright">正位</option>
-      <option value="reversed">逆位</option>
-    </select>
-    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" style="color:var(--rose)">✕</button>
-  `;
-  container.appendChild(div);
+  const c = document.getElementById('cards-container');
+  const d = document.createElement('div'); d.className = 'card-entry';
+  d.innerHTML = `<input type="text" class="form-input card-name" placeholder="牌名（例：命運之輪）"><select class="form-select card-orient"><option value="upright">正位</option><option value="reversed">逆位</option></select><button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" style="color:var(--rose)">✕</button>`;
+  c.appendChild(d);
 }
-
 function selectSignal(btn) {
-  document.querySelectorAll('#r-signal-chips .chip-option').forEach(c => c.classList.remove('selected'));
-  btn.classList.add('selected');
-  selectedSignal = btn.dataset.val;
+  document.querySelectorAll('#r-signal-chips .chip-option').forEach(c=>c.classList.remove('selected'));
+  btn.classList.add('selected'); selectedSignal = btn.dataset.val;
 }
-
-function saveReading() {
+async function saveReading() {
   const assetId = document.getElementById('r-asset').value;
   const date = document.getElementById('r-date').value;
-  if (!assetId) { toast('請選擇標的', 'error'); return; }
-  if (!date) { toast('請填寫抽牌日期', 'error'); return; }
-
+  if (!assetId) { toast('請選擇標的','error'); return; }
+  if (!date) { toast('請填寫抽牌日期','error'); return; }
   const cards = [];
-  document.querySelectorAll('.card-entry').forEach((entry, i) => {
-    const name = entry.querySelector('.card-name')?.value?.trim();
-    const orient = entry.querySelector('.card-orient')?.value;
-    if (name) cards.push({ position: i+1, card: name, orientation: orient });
+  document.querySelectorAll('.card-entry').forEach((e,i)=>{
+    const n = e.querySelector('.card-name')?.value?.trim();
+    if (n) cards.push({position:i+1, card:n, orientation:e.querySelector('.card-orient')?.value});
   });
-
-  const reading = {
-    id: genId('r'),
-    asset_id: assetId,
-    date,
-    target_date: document.getElementById('r-target-date').value || '',
+  const r = { id:genId('r'), asset_id:assetId, date,
+    target_date: document.getElementById('r-target-date').value||'',
     time_horizon: document.getElementById('r-horizon').value,
     question: document.getElementById('r-question').value.trim(),
     spread_type: document.getElementById('r-spread').value,
-    cards,
-    interpretation: { notes: document.getElementById('r-notes').value.trim() },
-    signal: { trend: selectedSignal || 'unclear' },
-    source: 'manual',
-    created_at: date,
-    updated_at: date
-  };
-
-  DB.readings.push(reading);
-  saveLocal();
-  saveToDrive('readings');
-  toast('占卜紀錄已儲存', 'success');
-  resetReadingForm();
-  showPage('dashboard');
+    cards, interpretation:{summary:'',notes:document.getElementById('r-notes').value.trim()},
+    signal:{trend:selectedSignal||'unclear',status:null,trade_type:null},
+    flags:[], research_tags:[], source:'manual', legacy_id:'', created_at:date, updated_at:date };
+  DB.readings.push(r);
+  toast('儲存中…','info');
+  const ok = await saveToDrive('readings');
+  toast(ok ? '占卜紀錄已儲存' : '儲存失敗，請檢查 Drive 連線', ok?'success':'error');
+  resetReadingForm(); showPage('dashboard');
 }
-
 function resetReadingForm() {
-  document.getElementById('r-asset').value = '';
-  document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('r-target-date').value = '';
-  document.getElementById('r-question').value = '';
-  document.getElementById('r-notes').value = '';
-  document.getElementById('cards-container').innerHTML = '';
-  selectedSignal = null;
-  document.querySelectorAll('#r-signal-chips .chip-option').forEach(c => c.classList.remove('selected'));
+  document.getElementById('r-asset').value='';
+  document.getElementById('r-date').value=todayStr();
+  document.getElementById('r-target-date').value='';
+  document.getElementById('r-question').value='';
+  document.getElementById('r-notes').value='';
+  document.getElementById('cards-container').innerHTML='';
+  selectedSignal=null;
+  document.querySelectorAll('#r-signal-chips .chip-option').forEach(c=>c.classList.remove('selected'));
   addCardEntry();
 }
 
-// ═══════════════════════════════════════════════════════
-// VALIDATION CENTER
-// ═══════════════════════════════════════════════════════
-function switchTab(group, tab, btn) {
-  document.querySelectorAll(`#page-${group === 'val' ? 'validation' : group} .tab-btn`).forEach(b => b.classList.remove('active'));
-  document.querySelectorAll(`#page-${group === 'val' ? 'validation' : group} .tab-content`).forEach(c => c.classList.remove('active'));
+// ── VALIDATION CENTER ─────────────────────────────────────────
+function switchTab(g, tab, btn) {
+  const base = document.getElementById(`page-${g==='val'?'validation':g}`);
+  base.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  base.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById(`${group}-tab-${tab}`)?.classList.add('active');
+  document.getElementById(`${g}-tab-${tab}`)?.classList.add('active');
 }
-
 function renderValidation() {
-  const today = dateStr(new Date());
-  const weekAgo = dateStr(new Date(Date.now() - 7*86400000));
-
-  // pending = readings without validation
-  const pending = DB.readings.filter(r => !DB.validations.find(v => v.reading_id === r.id));
-  const completed = DB.validations.filter(v => v.validation_date >= weekAgo);
-
+  const today = todayStr();
+  const weekAgo = new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+  const pending = DB.readings.filter(r=>!DB.validations.find(v=>v.reading_id===r.id));
+  const sp = r => { if(!r.target_date)return 2; if(r.target_date<today)return 0; if(r.target_date===today)return 1; return 2; };
+  pending.sort((a,b)=>sp(a)-sp(b)||(a.target_date||'9999').localeCompare(b.target_date||'9999'));
   document.getElementById('val-pending-count').textContent = `${pending.length} 筆待驗證`;
-
-  // sort pending
-  pending.sort((a, b) => {
-    const priority = r => {
-      if (!r.target_date) return 3;
-      if (r.target_date < today) return 0;
-      if (r.target_date === today) return 1;
-      return 2;
-    };
-    return priority(a) - priority(b);
-  });
-
   document.getElementById('val-pending-list').innerHTML = pending.length
-    ? pending.map(r => validationRow(r, 'pending')).join('')
-    : '<div class="empty-state"><div class="icon">✅</div><h3>全部驗證完成</h3><p>沒有待驗證的紀錄</p></div>';
-
-  const weekVals = DB.validations.filter(v => v.validation_date >= weekAgo);
-  document.getElementById('val-week-list').innerHTML = weekVals.length
-    ? weekVals.map(v => validatedRow(v)).join('')
+    ? pending.map(r=>valPendingRow(r,today)).join('')
+    : '<div class="empty-state"><div class="icon">✅</div><h3>全部驗證完成</h3></div>';
+  document.getElementById('val-week-list').innerHTML = DB.validations.filter(v=>v.validation_date>=weekAgo).length
+    ? DB.validations.filter(v=>v.validation_date>=weekAgo).slice().reverse().map(valDoneRow).join('')
     : '<div class="empty-state"><div class="icon">📅</div><h3>本週尚無完成的驗證</h3></div>';
-
   document.getElementById('val-all-list').innerHTML = DB.validations.length
-    ? DB.validations.slice().reverse().map(v => validatedRow(v)).join('')
+    ? DB.validations.slice().reverse().map(valDoneRow).join('')
     : '<div class="empty-state"><div class="icon">🃏</div><h3>尚無驗證紀錄</h3></div>';
 }
-
-function validationRow(reading, type) {
-  const asset = DB.assets.find(a => a.id === reading.asset_id);
-  const today = dateStr(new Date());
-  const td = reading.target_date;
-  let statusCls = '', statusLabel = '觀察中';
-  if (td && td < today) { statusCls = 'val-badge-overdue'; statusLabel = '超期'; }
-  else if (td === today) { statusCls = 'val-badge-today'; statusLabel = '今日到期'; }
-  const signal = reading.signal?.trend || 'unclear';
-
-  return `<div class="val-item mb-8">
-    <div class="val-item-header" onclick="toggleExpand(this)">
-      <span class="bold">${asset?.symbol || '?'}</span>
-      <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${reading.question || '—'}</span>
+function valPendingRow(r, today) {
+  const asset = DB.assets.find(a=>a.id===r.asset_id);
+  const td = r.target_date;
+  let sc='', sl='觀察中';
+  if (td&&td<today){sc='style="color:var(--rose);font-weight:600"';sl='超期';}
+  else if(td===today){sc='style="color:var(--amber);font-weight:600"';sl='今日到期';}
+  const signal=r.signal?.trend||'unclear';
+  const cards=(r.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
+  return `<div class="val-item">
+    <div class="val-item-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span class="bold">${esc(asset?.symbol||'?')}</span>
+      <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.question||'—')}</span>
       <span class="badge badge-${signal}">${signalLabel(signal)}</span>
-      <span class="text-muted">${reading.date || '—'}</span>
-      <span class="${statusCls} bold">${td || '—'}</span>
-      <span class="badge badge-neutral ${statusCls}">${statusLabel}</span>
+      <span class="text-muted">${r.date||'—'}</span>
+      <span ${sc}>${td||'—'}</span>
+      <span class="badge badge-neutral" ${sc}>${sl}</span>
     </div>
     <div class="val-item-body">
-      <div class="cards-display mb-8">
-        ${(reading.cards||[]).map(c => `<span class="card-chip ${c.orientation==='reversed'?'reversed':''}">${c.card}${c.orientation==='reversed'?' 逆':''}</span>`).join('')}
-      </div>
-      ${reading.interpretation?.notes ? `<div class="text-sm text-muted mb-12">${reading.interpretation.notes}</div>` : ''}
-      <button class="btn btn-primary btn-sm" onclick="openValidationModal('${reading.id}')">填寫驗證</button>
+      <div class="cards-display">${cards}</div>
+      ${r.interpretation?.notes?`<div class="text-sm text-muted mb-12">${esc(r.interpretation.notes)}</div>`:''}
+      <button class="btn btn-primary btn-sm" onclick="openValidationModal('${r.id}')">填寫驗證</button>
     </div>
   </div>`;
 }
-
-function validatedRow(val) {
-  const reading = DB.readings.find(r => r.id === val.reading_id);
-  const asset = reading ? DB.assets.find(a => a.id === reading.asset_id) : null;
-  return `<div class="val-item mb-8">
-    <div class="val-item-header" onclick="openValidationEditModal('${val.id}')">
-      <span class="bold">${asset?.symbol || '?'}</span>
-      <span class="text-muted text-sm">${reading?.question || '—'}</span>
+function valDoneRow(val) {
+  const r = DB.readings.find(x=>x.id===val.reading_id);
+  const asset = r ? DB.assets.find(a=>a.id===r.asset_id) : null;
+  const hasRaw = !!val.raw_legacy_text;
+  return `<div class="val-item">
+    <div class="val-item-hdr" onclick="${hasRaw?'this.nextElementSibling.classList.toggle(\'open\')':''}" style="${!hasRaw?'cursor:default':''}">
+      <span class="bold">${esc(asset?.symbol||'?')}</span>
+      <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r?.question||'—')}</span>
       <span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>
-      <span class="text-muted">${reading?.date || '—'}</span>
-      <span class="text-muted">${val.validation_date || '—'}</span>
-      <span class="text-muted">${val.outcome || '—'}</span>
+      <span class="text-muted">${r?.date||'—'}</span>
+      <span class="text-muted">${val.validation_date||'—'}</span>
+      <span class="text-muted">${val.outcome||'—'}</span>
     </div>
+    ${hasRaw?`<div class="val-item-body">
+      ${val.analysis?`<div class="text-sm text-muted mb-8">${esc(val.analysis)}</div>`:''}
+      <div class="legacy-text">${esc(val.raw_legacy_text)}</div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="openValidationModal('${r?.id||''}','${val.id}')">✏️ 編輯</button>
+    </div>`:''}
   </div>`;
 }
-
-function openValidationModal(readingId, existingValId=null) {
-  const reading = DB.readings.find(r => r.id === readingId);
-  const asset = reading ? DB.assets.find(a => a.id === reading.asset_id) : null;
-  const existingVal = existingValId ? DB.validations.find(v => v.id === existingValId) : null;
-
-  document.getElementById('modal-val-title').textContent = existingValId ? '編輯驗證' : '填寫驗證';
+function openValidationModal(readingId, existingValId='') {
+  const r = DB.readings.find(x=>x.id===readingId);
+  const asset = r ? DB.assets.find(a=>a.id===r.asset_id) : null;
+  const ev = existingValId ? DB.validations.find(v=>v.id===existingValId) : null;
+  document.getElementById('modal-val-title').textContent = ev ? '編輯驗證' : '填寫驗證';
   document.getElementById('val-reading-id').value = readingId;
-  document.getElementById('val-edit-id').value = existingValId || '';
-  document.getElementById('val-date').value = existingVal?.validation_date || new Date().toISOString().split('T')[0];
-  document.getElementById('val-accuracy').value = existingVal?.accuracy || '';
-  document.getElementById('val-outcome').value = existingVal?.outcome || '';
-  document.getElementById('val-analysis').value = existingVal?.analysis || '';
-
-  const signal = reading?.signal?.trend || 'unclear';
+  document.getElementById('val-edit-id').value = existingValId||'';
+  document.getElementById('val-date').value = ev?.validation_date||todayStr();
+  document.getElementById('val-accuracy').value = ev?.accuracy||'';
+  document.getElementById('val-outcome').value = ev?.outcome||'';
+  document.getElementById('val-analysis').value = ev?.analysis||'';
+  const signal = r?.signal?.trend||'unclear';
+  const cards = (r?.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
   document.getElementById('val-reading-summary').innerHTML = `
     <div class="flex items-center gap-8 mb-4">
-      <span class="bold">${asset?.symbol || '?'} · ${asset?.name || ''}</span>
+      <span class="bold">${esc(asset?.symbol||'?')} · ${esc(asset?.name||'')}</span>
       <span class="badge badge-${signal}">${signalLabel(signal)}</span>
     </div>
-    <div class="text-sm text-muted">${reading?.question || ''} · ${reading?.date || ''} → ${reading?.target_date || '—'}</div>
-    <div class="cards-display mt-8">${(reading?.cards||[]).map(c => `<span class="card-chip ${c.orientation==='reversed'?'reversed':''}">${c.card}${c.orientation==='reversed'?' 逆':''}</span>`).join('')}</div>
-  `;
-
-  // Key events
-  document.getElementById('key-events-container').innerHTML = '';
-  if (existingVal?.key_events) {
-    existingVal.key_events.forEach(ev => addKeyEvent(ev));
-  }
-
-  populateModelChips(existingVal?.related_model_ids || []);
+    <div class="text-sm text-muted mb-6">${esc(r?.question||'')} · ${r?.date||''} → ${r?.target_date||'—'}</div>
+    <div class="cards-display">${cards}</div>
+    ${ev?.raw_legacy_text?`<div class="detail-label mt-8">舊版驗證文字</div><div class="legacy-text mt-4" style="max-height:120px;overflow-y:auto">${esc(ev.raw_legacy_text)}</div>`:''}`;
+  document.getElementById('key-events-container').innerHTML='';
+  (ev?.key_events||[]).forEach(e=>addKeyEvent(e));
+  populateModelChips(ev?.related_model_ids||[]);
   openModal('modal-validation');
 }
-
-function openValidationEditModal(valId) {
-  const val = DB.validations.find(v => v.id === valId);
-  if (!val) return;
-  openValidationModal(val.reading_id, valId);
-}
-
 function addKeyEvent(ev=null) {
-  const container = document.getElementById('key-events-container');
-  const div = document.createElement('div');
-  div.className = 'key-event-entry';
-  div.innerHTML = `
-    <div class="form-row-3 mb-8">
-      <div>
-        <label class="form-label">類型</label>
-        <select class="form-select event-type">
-          <option value="policy">政策</option>
-          <option value="earnings">財報</option>
-          <option value="sector_theme">板塊題材</option>
-          <option value="market_sentiment">市場情緒</option>
-          <option value="technical">技術面</option>
-          <option value="other">其他</option>
-        </select>
-      </div>
-      <div>
-        <label class="form-label">日期</label>
-        <input type="date" class="form-input event-date" value="${ev?.event_date || ''}">
-      </div>
-      <div style="display:flex;align-items:flex-end">
-        <button class="btn btn-danger btn-sm" onclick="this.closest('.key-event-entry').remove()" style="width:100%">移除</button>
-      </div>
-    </div>
-    <input type="text" class="form-input event-desc" placeholder="事件描述…" value="${ev?.description || ''}">
-  `;
-  if (ev?.event_type) div.querySelector('.event-type').value = ev.event_type;
-  container.appendChild(div);
+  const c = document.getElementById('key-events-container');
+  const d = document.createElement('div'); d.className='key-event-entry';
+  d.innerHTML=`<div class="form-row-3 mb-8">
+    <div><label class="form-label">類型</label><select class="form-select event-type"><option value="policy">政策</option><option value="earnings">財報</option><option value="sector_theme">板塊題材</option><option value="market_sentiment">市場情緒</option><option value="technical">技術面</option><option value="other">其他</option></select></div>
+    <div><label class="form-label">日期</label><input type="date" class="form-input event-date" value="${ev?.event_date||''}"></div>
+    <div style="display:flex;align-items:flex-end"><button class="btn btn-danger btn-sm" onclick="this.closest('.key-event-entry').remove()" style="width:100%">移除</button></div>
+  </div>
+  <input type="text" class="form-input event-desc" placeholder="事件描述…" value="${esc(ev?.description||'')}">`;
+  if (ev?.event_type) d.querySelector('.event-type').value=ev.event_type;
+  c.appendChild(d);
 }
-
-function populateModelChips(selectedIds=[]) {
-  const container = document.getElementById('val-model-chips');
-  if (!container) return;
-  const active = DB.models.filter(m => m.status === 'active');
-  container.innerHTML = active.map(m => `
-    <button class="chip-option ${selectedIds.includes(m.id)?'selected':''}" 
-      data-id="${m.id}" onclick="this.classList.toggle('selected')">${m.name}</button>
-  `).join('');
+function populateModelChips(sel=[]) {
+  const c = document.getElementById('val-model-chips'); if (!c) return;
+  c.innerHTML = DB.models.filter(m=>m.status!=='deprecated').map(m=>
+    `<button class="chip-option ${sel.includes(m.id)?'selected':''}" data-id="${m.id}" onclick="this.classList.toggle('selected')">${esc(m.name)}</button>`
+  ).join('');
 }
-
-function saveValidation() {
+async function saveValidation() {
   const readingId = document.getElementById('val-reading-id').value;
   const accuracy = document.getElementById('val-accuracy').value;
-  if (!accuracy) { toast('請選擇 Accuracy', 'error'); return; }
-
+  if (!accuracy) { toast('請選擇 Accuracy','error'); return; }
   const keyEvents = [];
-  document.querySelectorAll('.key-event-entry').forEach(entry => {
-    const type = entry.querySelector('.event-type')?.value;
-    const date = entry.querySelector('.event-date')?.value;
-    const desc = entry.querySelector('.event-desc')?.value?.trim();
-    if (desc) keyEvents.push({ event_type: type, event_date: date, description: desc });
+  document.querySelectorAll('.key-event-entry').forEach(e=>{
+    const desc = e.querySelector('.event-desc')?.value?.trim();
+    if (desc) keyEvents.push({event_type:e.querySelector('.event-type')?.value, event_date:e.querySelector('.event-date')?.value||'', description:desc});
   });
-
-  const relatedModels = [];
-  document.querySelectorAll('#val-model-chips .chip-option.selected').forEach(c => {
-    relatedModels.push(c.dataset.id);
-  });
-
+  const related = [];
+  document.querySelectorAll('#val-model-chips .chip-option.selected').forEach(c=>related.push(c.dataset.id));
   const editId = document.getElementById('val-edit-id').value;
-  const valDate = document.getElementById('val-date').value;
-
-  const data = {
-    reading_id: readingId,
-    validation_date: valDate,
-    accuracy,
-    outcome: document.getElementById('val-outcome').value,
-    key_events: keyEvents,
-    analysis: document.getElementById('val-analysis').value.trim(),
-    related_model_ids: relatedModels,
-    raw_legacy_text: '',
-    confidence: ''
-  };
-
+  const data = { reading_id:readingId, validation_date:document.getElementById('val-date').value,
+    accuracy, outcome:document.getElementById('val-outcome').value,
+    key_events:keyEvents, analysis:document.getElementById('val-analysis').value.trim(),
+    related_model_ids:related, price_change_pct:null, confidence:'', raw_legacy_text:'', notes:'' };
   if (editId) {
-    const idx = DB.validations.findIndex(v => v.id === editId);
-    if (idx !== -1) DB.validations[idx] = { ...DB.validations[idx], ...data };
-    toast('驗證已更新', 'success');
+    const idx = DB.validations.findIndex(v=>v.id===editId);
+    if (idx!==-1) {
+      const ex = DB.validations[idx];
+      DB.validations[idx] = {...ex,...data};
+      if (!data.raw_legacy_text && ex.raw_legacy_text) DB.validations[idx].raw_legacy_text = ex.raw_legacy_text;
+    }
+    toast('驗證已更新','success');
   } else {
-    data.id = genId('v');
-    DB.validations.push(data);
-    // update model evidence
-    relatedModels.forEach(modelId => {
-      const m = DB.models.find(m2 => m2.id === modelId);
-      if (m && !m.evidence_reading_ids.includes(readingId)) {
-        m.evidence_reading_ids.push(readingId);
-      }
-    });
-    toast('驗證已儲存', 'success');
+    data.id = genId('v'); DB.validations.push(data);
+    related.forEach(mid=>{const m=DB.models.find(x=>x.id===mid);if(m&&!(m.evidence_reading_ids||[]).includes(readingId))m.evidence_reading_ids.push(readingId);});
+    toast('驗證已儲存','success');
   }
-
-  saveLocal();
-  saveToDrive('validations');
-  saveToDrive('models');
-  closeModal('modal-validation');
-  renderValidation();
-  renderDashboard();
+  closeModal('modal-validation'); renderValidation(); renderDashboard();
+  await saveToDrive('validations');
+  await saveToDrive('models');
 }
 
-// ═══════════════════════════════════════════════════════
-// CARD EXPLORER
-// ═══════════════════════════════════════════════════════
-function setExplorerFilter(f, el) {
-  STATE.explorerFilter = f;
-  document.querySelectorAll('#page-explorer .filter-chip').forEach(c => c.classList.remove('active'));
-  if (el) el.classList.add('active');
-  renderExplorer();
-}
-
+// ── CARD EXPLORER ─────────────────────────────────────────────
 function renderExplorer() {
-  const el = document.getElementById('explorer-table');
-  if (!el) return;
-  const q = (document.getElementById('explorer-search')?.value || '').toLowerCase();
-  const f = STATE.explorerFilter;
-
-  // Build card stats
-  const cardMap = {};
-  DB.readings.forEach(r => {
-    (r.cards || []).forEach(c => {
+  const el = document.getElementById('explorer-table'); if (!el) return;
+  const q = (document.getElementById('explorer-search')?.value||'').toLowerCase();
+  const f = S.explorerFilter;
+  const map = {};
+  DB.readings.forEach(r=>{
+    (r.cards||[]).forEach(c=>{
       if (!c.card) return;
-      const key = c.card;
-      if (!cardMap[key]) cardMap[key] = { name: key, upright: 0, reversed: 0, hit: 0, miss: 0, partial: 0, total: 0 };
-      const orient = c.orientation === 'reversed' ? 'reversed' : 'upright';
-      cardMap[key][orient]++;
-      cardMap[key].total++;
-
-      // check if reading has validation
-      const val = DB.validations.find(v => v.reading_id === r.id);
-      if (val) {
-        if (val.accuracy === 'hit') cardMap[key].hit++;
-        else if (val.accuracy === 'miss') cardMap[key].miss++;
-        else cardMap[key].partial++;
-      }
+      if (!map[c.card]) map[c.card]={name:c.card,upright:0,reversed:0,hit:0,miss:0,partial:0,total:0};
+      map[c.card][c.orientation==='reversed'?'reversed':'upright']++;
+      map[c.card].total++;
+      const val=DB.validations.find(v=>v.reading_id===r.id);
+      if (val){if(val.accuracy==='hit')map[c.card].hit++;else if(val.accuracy==='miss')map[c.card].miss++;else map[c.card].partial++;}
     });
   });
-
-  let cards = Object.values(cardMap);
-  if (q) cards = cards.filter(c => c.name.toLowerCase().includes(q));
-  if (f === 'upright') cards = cards.filter(c => c.upright > 0);
-  if (f === 'reversed') cards = cards.filter(c => c.reversed > 0);
-
-  cards.sort((a, b) => b.total - a.total);
-
-  if (!cards.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:32px"><h3>尚無資料</h3></div>';
-    return;
-  }
-
-  el.innerHTML = cards.map(c => {
-    const validated = c.hit + c.miss + c.partial;
-    const hitRate = validated ? Math.round(c.hit / validated * 100) : null;
+  let cards = Object.values(map);
+  if (q) cards=cards.filter(c=>c.name.toLowerCase().includes(q));
+  if (f==='upright') cards=cards.filter(c=>c.upright>0);
+  if (f==='reversed') cards=cards.filter(c=>c.reversed>0);
+  cards.sort((a,b)=>b.total-a.total);
+  if (!cards.length){el.innerHTML='<div class="empty-state" style="padding:32px"><h3>尚無資料</h3></div>';return;}
+  el.innerHTML=cards.map(c=>{
+    const v=c.hit+c.miss+c.partial;
+    const hr=v?Math.round(c.hit/v*100):null;
     return `<div class="card-stat-row">
-      <span class="bold">${c.name}</span>
-      <div>
-        ${hitRate !== null ? `<div class="mini-bar"><div class="mini-bar-fill" style="width:${hitRate}%"></div></div>` : '<span class="text-light text-sm">未驗證</span>'}
-      </div>
+      <span class="bold">${esc(c.name)}</span>
+      <div>${hr!==null?`<div class="mini-bar"><div class="mini-bar-fill" style="width:${hr}%"></div></div>`:'<span class="text-light text-sm">未驗證</span>'}</div>
       <span>${c.total}</span>
-      <span class="${hitRate!==null?'hit-rate':''}">${hitRate!==null?hitRate+'%':'—'}</span>
-      <span class="${c.miss?'miss-rate':''}">${c.miss || 0}</span>
+      <span class="${hr!==null?'hit-rate':''}">${hr!==null?hr+'%':'—'}</span>
+      <span class="${c.miss?'miss-rate':''}">${c.miss||0}</span>
     </div>`;
   }).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-// RESEARCH MODELS
-// ═══════════════════════════════════════════════════════
-function setModelFilter(f, el) {
-  STATE.modelFilter = f;
-  document.querySelectorAll('#page-models .filter-chip').forEach(c => c.classList.remove('active'));
-  if (el) el.classList.add('active');
-  renderModels();
-}
-
-function renderModels() {
-  const el = document.getElementById('models-container');
-  if (!el) return;
-  const f = STATE.modelFilter;
-
-  let list = DB.models.filter(m => {
-    if (f === 'current') return m.status !== 'deprecated';
-    if (f === 'deprecated') return m.status === 'deprecated';
-    if (f === 'all') return true;
-    return m.category === f;
-  });
-
-  if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">🧪</div><h3>尚無符合的 Models</h3></div>';
-    return;
-  }
-
-  // Group by category
-  const groups = {
-    market_structure: { label: '市場結構', icon: '📈', items: [] },
-    card_meaning: { label: '特殊牌研究', icon: '🃏', items: [] },
-    methodology: { label: '方法論', icon: '📐', items: [] },
-    deprecated: { label: '已封存', icon: '📦', items: [] }
-  };
-
-  list.forEach(m => {
-    const g = m.status === 'deprecated' ? 'deprecated' : (groups[m.category] ? m.category : 'methodology');
-    groups[g]?.items.push(m);
-  });
-
-  let html = '';
-  for (const [key, grp] of Object.entries(groups)) {
-    if (!grp.items.length) continue;
-    html += `<div class="model-section">
-      <div class="model-section-label">${grp.icon} ${grp.label} <span style="color:var(--text-light)">(${grp.items.length})</span></div>
-      ${grp.items.map(modelCard).join('')}
-    </div>`;
-  }
-  el.innerHTML = html;
-}
-
-function modelCard(m) {
-  const catBadge = categoryBadge(m.category);
-  const statusBadge = `<span class="badge badge-${m.status}">${m.status}</span>`;
-  const evidence = (m.evidence_reading_ids || []).length;
-  const counter = (m.counter_evidence_ids || []).length;
-  const progress = Math.min(100, evidence * 10);
-
-  return `<div class="model-card" onclick="openModelDetail('${m.id}')">
-    <div class="model-card-top">
-      <div>
-        <div class="model-name">${m.name}</div>
-        <div class="model-id">${m.id} · v${m.version}</div>
-      </div>
-      <div class="model-badges">${statusBadge} ${catBadge}</div>
-    </div>
-    ${m.hypothesis ? `<div class="model-hypo">${m.hypothesis.slice(0, 120)}${m.hypothesis.length > 120 ? '…' : ''}</div>` : ''}
-    <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
-    <div class="model-evidence">佐證 ${evidence} 筆 · 反例 ${counter} 筆</div>
-  </div>`;
-}
-
-function openModelDetail(modelId) {
-  const m = DB.models.find(m2 => m2.id === modelId);
-  if (!m) return;
-  // Pre-fill edit modal
-  document.getElementById('modal-model-title').textContent = '編輯 Model';
-  document.getElementById('model-edit-id').value = m.id;
-  document.getElementById('model-id-input').value = m.id;
-  document.getElementById('model-id-input').readOnly = true;
-  document.getElementById('model-version').value = m.version || '1.0';
-  document.getElementById('model-name').value = m.name;
-  document.getElementById('model-category').value = m.category || 'market_structure';
-  document.getElementById('model-status').value = m.status || 'active';
-  document.getElementById('model-hypothesis').value = m.hypothesis || '';
-  document.getElementById('model-definition').value = m.definition || '';
+// ── RESEARCH MODELS ───────────────────────────────────────────
+function openModelModal(m=null) {
+  document.getElementById('modal-model-title').textContent = m ? '編輯 Model' : '新增 Research Model';
+  document.getElementById('model-edit-id').value = m?.id||'';
+  document.getElementById('model-id-input').value = m?.id||'';
+  document.getElementById('model-id-input').readOnly = !!m;
+  document.getElementById('model-version').value = m?.version||'1.0';
+  document.getElementById('model-name').value = m?.name||'';
+  document.getElementById('model-category').value = m?.category||'market_structure';
+  document.getElementById('model-status').value = m?.status||'active';
+  document.getElementById('model-hypothesis').value = m?.hypothesis||'';
+  document.getElementById('model-definition').value = m?.definition||'';
   document.getElementById('model-changelog-note').value = '';
   openModal('modal-model');
 }
-
-function saveModel() {
+function renderModels() {
+  const el = document.getElementById('models-container'); if (!el) return;
+  const f = S.modelFilter;
+  let list = DB.models.filter(m=>{
+    if(f==='current')return m.status!=='deprecated';
+    if(f==='deprecated')return m.status==='deprecated';
+    if(f==='all')return true;
+    return m.category===f;
+  });
+  if (!list.length){el.innerHTML='<div class="empty-state"><div class="icon">🧪</div><h3>尚無符合的 Models</h3></div>';return;}
+  const groups={market_structure:{label:'市場結構',icon:'📈',items:[]},card_meaning:{label:'特殊牌研究',icon:'🃏',items:[]},methodology:{label:'方法論',icon:'📐',items:[]},deprecated:{label:'已封存',icon:'📦',items:[]}};
+  list.forEach(m=>{const g=m.status==='deprecated'?'deprecated':(groups[m.category]?m.category:'methodology');groups[g].items.push(m);});
+  let html='';
+  for (const[,grp] of Object.entries(groups)){
+    if(!grp.items.length)continue;
+    html+=`<div class="model-section"><div class="model-section-label">${grp.icon} ${grp.label} <span style="color:var(--text-light)">(${grp.items.length})</span></div>${grp.items.map(m=>{
+      const ev=(m.evidence_reading_ids||[]).length;
+      const ct=(m.counter_evidence_ids||[]).length;
+      const prog=Math.min(100,ev*10);
+      const tags=(m.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+      return`<div class="model-card" onclick="openModelModal(DB.models.find(x=>x.id==='${m.id}'))">
+        <div class="flex items-center justify-between gap-8">
+          <div><div class="bold" style="font-size:15px">${esc(m.name)}</div><div class="text-sm text-light font-mono mt-4">${m.id} · v${m.version||'1.0'}</div></div>
+          <div class="flex gap-6">${catBadge(m.category)}<span class="badge badge-${m.status}">${m.status}</span></div>
+        </div>
+        ${m.hypothesis?`<div class="text-sm text-muted mt-8">${esc(m.hypothesis.slice(0,120))}${m.hypothesis.length>120?'…':''}</div>`:''}
+        ${tags?`<div class="tags-wrap mt-6">${tags}</div>`:''}
+        <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+        <div class="text-sm text-light mt-4">佐證 ${ev} 筆 · 反例 ${ct} 筆</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  el.innerHTML=html;
+}
+async function saveModel() {
   const editId = document.getElementById('model-edit-id').value;
   const id = document.getElementById('model-id-input').value.trim();
   const name = document.getElementById('model-name').value.trim();
-  if (!id || !name) { toast('ID 與名稱為必填', 'error'); return; }
-
-  const today = new Date().toISOString().split('T')[0];
-  const version = document.getElementById('model-version').value.trim() || '1.0';
-  const changeNote = document.getElementById('model-changelog-note').value.trim();
-
+  if (!id||!name){toast('ID 與名稱為必填','error');return;}
+  const today=todayStr(); const version=document.getElementById('model-version').value.trim()||'1.0';
+  const note=document.getElementById('model-changelog-note').value.trim();
   if (editId) {
-    const idx = DB.models.findIndex(m => m.id === editId);
-    if (idx !== -1) {
-      const existing = DB.models[idx];
-      const changelog = existing.changelog || [];
-      if (changeNote) changelog.push({ version, date: today, note: changeNote });
-      DB.models[idx] = {
-        ...existing,
-        name,
-        category: document.getElementById('model-category').value,
-        status: document.getElementById('model-status').value,
-        version,
-        hypothesis: document.getElementById('model-hypothesis').value.trim(),
-        definition: document.getElementById('model-definition').value.trim(),
-        changelog
-      };
+    const idx=DB.models.findIndex(m=>m.id===editId);
+    if (idx!==-1){
+      const ex=DB.models[idx]; const cl=[...(ex.changelog||[])];
+      if(note)cl.push({version,date:today,note});
+      DB.models[idx]={...ex,name,category:document.getElementById('model-category').value,status:document.getElementById('model-status').value,version,hypothesis:document.getElementById('model-hypothesis').value.trim(),definition:document.getElementById('model-definition').value.trim(),changelog:cl};
     }
-    toast('Model 已更新', 'success');
+    toast('Model 已更新','success');
   } else {
-    if (DB.models.find(m => m.id === id)) { toast('ID 已存在', 'error'); return; }
-    DB.models.push({
-      id,
-      name,
-      category: document.getElementById('model-category').value,
-      status: document.getElementById('model-status').value,
-      version,
-      hypothesis: document.getElementById('model-hypothesis').value.trim(),
-      definition: document.getElementById('model-definition').value.trim(),
-      evidence_reading_ids: [],
-      counter_evidence_ids: [],
-      changelog: [{ version, date: today, note: changeNote || '初始建立' }]
-    });
-    toast('Model 已新增', 'success');
+    if(DB.models.find(m=>m.id===id)){toast('ID 已存在','error');return;}
+    DB.models.push({id,name,category:document.getElementById('model-category').value,status:document.getElementById('model-status').value,version,hypothesis:document.getElementById('model-hypothesis').value.trim(),definition:document.getElementById('model-definition').value.trim(),evidence_reading_ids:[],counter_evidence_ids:[],tags:[],confidence:'',changelog:[{version,date:today,note:note||'初始建立'}]});
+    toast('Model 已新增','success');
   }
-
-  document.getElementById('model-id-input').readOnly = false;
-  document.getElementById('model-edit-id').value = '';
-  saveLocal();
-  saveToDrive('models');
-  closeModal('modal-model');
-  renderModels();
-  updateStatsDisplay();
+  document.getElementById('model-id-input').readOnly=false;
+  document.getElementById('model-edit-id').value='';
+  closeModal('modal-model'); renderModels(); updateStats();
+  await saveToDrive('models');
 }
 
-// ═══════════════════════════════════════════════════════
-// SETTINGS / EXPORT
-// ═══════════════════════════════════════════════════════
-function updateStatsDisplay() {
-  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setEl('stat-assets', DB.assets.length);
-  setEl('stat-readings', DB.readings.length);
-  setEl('stat-validations', DB.validations.length);
-  setEl('stat-models', DB.models.length);
-}
-
+// ── EXPORT / IMPORT ───────────────────────────────────────────
 function exportAll() {
-  const blob = new Blob([JSON.stringify({ assets: DB.assets, readings: DB.readings, validations: DB.validations, models: DB.models }, null, 2)], { type: 'application/json' });
-  downloadBlob(blob, `tarot_backup_${dateStr(new Date())}.json`);
-  toast('備份匯出成功', 'success');
+  const blob = new Blob([JSON.stringify({assets:DB.assets,readings:DB.readings,validations:DB.validations,models:DB.models},null,2)],{type:'application/json'});
+  dl(blob,`tarot_backup_${todayStr()}.json`); toast('備份匯出成功','success');
 }
-
-function exportEntity(entity) {
-  const blob = new Blob([JSON.stringify(DB[entity], null, 2)], { type: 'application/json' });
-  downloadBlob(blob, `tarot_${entity}_${dateStr(new Date())}.json`);
-}
-
-function downloadBlob(blob, name) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-}
-
-function importBackup(input) {
-  const file = input.files[0];
-  if (!file) return;
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+async function importBackup(input) {
+  const f = input.files[0]; if(!f)return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
-      const data = JSON.parse(e.target.result);
-      if (data.assets) DB.assets = data.assets;
-      if (data.readings) DB.readings = data.readings;
-      if (data.validations) DB.validations = data.validations;
-      if (data.models) DB.models = data.models;
-      saveLocal();
-      renderAll();
-      updateStatsDisplay();
-      toast('備份匯入成功', 'success');
-    } catch(err) {
-      toast('匯入失敗：JSON 格式錯誤', 'error');
-    }
+      const d=JSON.parse(e.target.result);
+      if(d.assets)DB.assets=d.assets; if(d.readings)DB.readings=d.readings;
+      if(d.validations)DB.validations=d.validations; if(d.models)DB.models=d.models;
+      renderAll(); updateStats(); toast('匯入成功，正在同步到 Drive…','info');
+      for(const entity of FILE_NAMES) await saveToDrive(entity);
+      toast('已同步到 Drive','success');
+    } catch(e){toast('匯入失敗','error');}
   };
-  reader.readAsText(file);
-  input.value = '';
+  reader.readAsText(f); input.value='';
 }
-
-// ═══════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════
-function dateStr(d) {
-  return d.toISOString().split('T')[0];
-}
-
-function signalLabel(s) {
-  return { bull:'📈 多', bear:'📉 空', neutral:'➡️ 中性', unclear:'❓ 不明' }[s] || s;
-}
-function accuracyLabel(a) {
-  return { hit:'✓ 命中', partial:'△ 部分', miss:'✕ 未中' }[a] || a;
-}
-function priorityLabel(p) {
-  return { watch:'Watch', research:'Research', client:'Client' }[p] || p;
-}
-function categoryBadge(cat) {
-  const map = {
-    market_structure: ['badge-struct', '市場結構'],
-    card_meaning: ['badge-special', '特殊牌'],
-    methodology: ['badge-method', '方法論']
-  };
-  const [cls, label] = map[cat] || ['badge-neutral', cat];
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-
-// ═══════════════════════════════════════════════════════
-// RUN
-// ═══════════════════════════════════════════════════════
-window.addEventListener('load', checkAuthCallback);
 </script>
 </body>
 </html>
