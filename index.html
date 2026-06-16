@@ -3659,20 +3659,21 @@ function buildByDayBlock(targetDate) {
       statusHtml = '<span class="text-xs text-mist">觀察中</span>';
     }
     const tdLabel = td ? ('目標 '+formatDate(td)) : ('抽牌 '+formatDate(r.date));
-    return '<div class="by-day-row" style="'+rowStyle+'" onclick="showAssetDetail(''+r.asset_id+'')">' +
-      '<div style="flex:1">' +
-        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-          '<span class="bdr-name">'+(a?.name||'')+'</span>' +
-          trendBadge(r.signal?.trend) +
-          statusHtml +
-          '<span style="font-size:10px;color:var(--text-3)">'+r.time_horizon+'</span>' +
-        '</div>' +
-        '<div style="display:flex;gap:8px;margin-top:3px">' +
-          '<span class="bdr-cards">'+cardsOneLiner(r.cards)+'</span>' +
-          '<span class="bdr-draw-date">'+tdLabel+'</span>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+    const aid = r.asset_id;
+    return `<div class="by-day-row" style="${rowStyle}" onclick="showAssetDetail('${aid}')">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="bdr-name">${a?.name||''}</span>
+          ${trendBadge(r.signal?.trend)}
+          ${statusHtml}
+          <span style="font-size:10px;color:var(--text-3)">${r.time_horizon}</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:3px">
+          <span class="bdr-cards">${cardsOneLiner(r.cards)}</span>
+          <span class="bdr-draw-date">${tdLabel}</span>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
