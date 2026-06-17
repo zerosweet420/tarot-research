@@ -293,6 +293,13 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
           <button onclick="shiftDate(1)">›</button>
           <button onclick="resetDate()" class="btn btn-sm btn-secondary">今日</button>
         </div>
+        <select class="form-select btn-sm" id="dash-sort" onchange="renderWatchList()" style="width:auto;padding:4px 8px;font-size:12px">
+          <option value="status">排序：狀態優先</option>
+          <option value="target_asc">Target 日期 ↑</option>
+          <option value="target_desc">Target 日期 ↓</option>
+          <option value="draw_desc">抽牌日 ↓</option>
+          <option value="asset">標的名稱</option>
+        </select>
         <button class="btn btn-sm btn-ghost" onclick="syncFromDrive()" title="重新從 Drive 同步">↻ 同步</button>
       </div>
     </div>
@@ -418,10 +425,7 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
           <button class="filter-chip" onclick="setFilter('explorer','reversed',this)">逆位</button>
         </div>
       </div>
-      <div class="card">
-        <div class="card-stat-row hdr"><span>牌名</span><span>命中率</span><span>總次</span><span>命中</span><span>未中</span></div>
-        <div id="explorer-table"></div>
-      </div>
+      <div id="explorer-table"></div>
     </div>
   </div>
 
@@ -477,6 +481,44 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 </div><!-- /main -->
 
 <!-- MODALS -->
+<!-- Edit Reading Modal -->
+<div class="modal-overlay" id="modal-reading">
+  <div class="modal">
+    <div class="modal-header"><h3>編輯占卜紀錄</h3><button class="modal-close" onclick="closeModal('modal-reading')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="reading-edit-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">抽牌日期</label><input type="date" class="form-input" id="re-date"></div>
+        <div class="form-group"><label class="form-label">目標日期</label><input type="date" class="form-input" id="re-target-date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">時間視野</label>
+          <select class="form-select" id="re-horizon">
+            <option value="1D">1D</option><option value="1W">1W</option><option value="3W">3W</option>
+            <option value="1M">1M</option><option value="3M">3M</option><option value="6M">6M</option><option value="OPEN">OPEN</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">信號方向</label>
+          <select class="form-select" id="re-signal">
+            <option value="bull">📈 多</option><option value="bear">📉 空</option>
+            <option value="neutral">➡️ 中性</option><option value="unclear">❓ 不確定</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">問題</label><input type="text" class="form-input" id="re-question"></div>
+      <div class="section-label">牌組</div>
+      <div id="re-cards-container"></div>
+      <button class="btn btn-secondary btn-sm mt-4" onclick="addReCardEntry()">＋ 新增一張牌</button>
+      <div class="form-group mt-12"><label class="form-label">解讀筆記</label><textarea class="form-textarea" id="re-notes" style="min-height:100px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteReading()" style="margin-right:auto">刪除</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-reading')">取消</button>
+      <button class="btn btn-primary" onclick="saveEditReading()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-asset">
   <div class="modal" style="max-width:480px">
     <div class="modal-header"><h3 id="modal-asset-title">新增標的</h3><button class="modal-close" onclick="closeModal('modal-asset')">✕</button></div>
@@ -491,6 +533,10 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <div class="form-row">
         <div class="form-group"><label class="form-label">類型</label><select class="form-select" id="asset-type"><option value="stock">股票</option><option value="etf">ETF</option><option value="index">指數</option></select></div>
         <div class="form-group"><label class="form-label">優先級</label><select class="form-select" id="asset-priority"><option value="watch">Watch</option><option value="research">Research</option><option value="client">Client</option></select></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">標籤 <span style="font-weight:400;text-transform:none;letter-spacing:0">（逗號分隔，例：半導體,AI,大型權值）</span></label>
+        <input type="text" class="form-input" id="asset-tags" placeholder="半導體, AI, 大型權值">
       </div>
       <div class="form-group"><label class="form-label">備註</label><textarea class="form-textarea" id="asset-notes" style="min-height:60px"></textarea></div>
     </div>
@@ -846,11 +892,14 @@ function renderWatchList() {
   const countEl = document.getElementById('watch-count');
   if (!body) return;
   const today = todayStr();
+  // FIX 3: only show readings for 'watch' priority assets
+  const watchAssetIds = new Set(DB.assets.filter(a => (a.priority||'watch') === 'watch').map(a => a.id));
   let rows = DB.readings.map(r => ({
     r, asset: DB.assets.find(a => a.id === r.asset_id),
     val: DB.validations.find(v => v.reading_id === r.id)
-  })).filter(x => x.asset);
+  })).filter(x => x.asset && watchAssetIds.has(x.asset.id));
 
+  const sortMode = document.getElementById('dash-sort')?.value || 'status';
   const sp = ({r, val}) => {
     if (val) return 3;
     const td = r.target_date;
@@ -859,7 +908,17 @@ function renderWatchList() {
     if (td === today) return 1;
     return 2;
   };
-  rows.sort((a,b) => sp(a)-sp(b) || (a.r.target_date||'9999').localeCompare(b.r.target_date||'9999'));
+  if (sortMode === 'status') {
+    rows.sort((a,b) => sp(a)-sp(b) || (a.r.target_date||'9999').localeCompare(b.r.target_date||'9999'));
+  } else if (sortMode === 'target_asc') {
+    rows.sort((a,b) => (a.r.target_date||'9000').localeCompare(b.r.target_date||'0000'));
+  } else if (sortMode === 'target_desc') {
+    rows.sort((a,b) => (b.r.target_date||'0000').localeCompare(a.r.target_date||'9000'));
+  } else if (sortMode === 'draw_desc') {
+    rows.sort((a,b) => (b.r.date||'0000').localeCompare(a.r.date||'0000'));
+  } else if (sortMode === 'asset') {
+    rows.sort((a,b) => (a.asset.name||a.asset.symbol).localeCompare(b.asset.name||b.asset.symbol));
+  }
 
   const pending = rows.filter(x => !x.val).length;
   if (countEl) countEl.textContent = `${pending} 筆觀察中 · 共 ${rows.length} 筆`;
@@ -881,7 +940,7 @@ function renderWatchList() {
       : rc === 'today' ? `<span class="badge" style="background:var(--amber-light);color:var(--amber)">今日</span>`
       : `<span class="badge badge-neutral">觀察中</span>`;
     return `<div class="watch-row ${rc}" onclick="showAssetDetail('${asset.id}')">
-      <span class="symbol-cell">${esc(asset.symbol)}</span>
+      <span class="symbol-cell" style="font-size:13px;font-weight:600">${esc(asset.name||asset.symbol)}</span>
       <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.question||'—')}</span>
       <span><span class="badge badge-${signal}">${signalLabel(signal)}</span></span>
       <span class="text-muted">${r.date||'—'}</span>
@@ -915,7 +974,9 @@ function setFilter(group, f, el) {
   if (group==='asset') S.assetFilter=f;
   else if (group==='model') S.modelFilter=f;
   else if (group==='explorer') S.explorerFilter=f;
-  el.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  // Find the nearest filter-bar ancestor (may be wrapped in flex container)
+  const bar = el.closest('.filter-bar') || el.parentElement;
+  bar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   if (group==='asset') renderAssets();
   else if (group==='model') renderModels();
@@ -1003,6 +1064,7 @@ function readingItem(r) {
       <div class="flex items-center gap-8">
         <span class="text-sm text-muted">${r.time_horizon||''}</span>
         ${r.signal?.status?`<span class="tag">${r.signal.status}</span>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditReading('${r.id}')" style="padding:2px 6px;font-size:11px">✏️</button>
         <span class="text-muted">›</span>
       </div>
     </div>
@@ -1035,6 +1097,7 @@ function openAssetModal(a=null) {
   document.getElementById('asset-legal').value = a?.legal_name||'';
   document.getElementById('asset-type').value = a?.asset_type||'stock';
   document.getElementById('asset-priority').value = a?.priority||'watch';
+  document.getElementById('asset-tags').value = (a?.tags||[]).join(', ');
   document.getElementById('asset-notes').value = a?.notes||'';
   openModal('modal-asset');
 }
@@ -1048,7 +1111,8 @@ async function saveAsset() {
     market: document.getElementById('asset-market').value,
     asset_type: document.getElementById('asset-type').value,
     priority: document.getElementById('asset-priority').value,
-    notes: document.getElementById('asset-notes').value.trim(), tags: [] };
+    notes: document.getElementById('asset-notes').value.trim(),
+    tags: document.getElementById('asset-tags').value.split(',').map(t=>t.trim()).filter(Boolean) };
   if (editId) {
     const idx = DB.assets.findIndex(a=>a.id===editId);
     if (idx!==-1) DB.assets[idx] = {...DB.assets[idx],...data};
@@ -1146,7 +1210,7 @@ function valPendingRow(r, today) {
   const cards=(r.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
   return `<div class="val-item">
     <div class="val-item-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
-      <span class="bold">${esc(asset?.symbol||'?')}</span>
+      <div><div class="bold">${esc(asset?.symbol||'?')}</div><div class="text-sm text-light">${esc(asset?.name||'')}</div></div>
       <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.question||'—')}</span>
       <span class="badge badge-${signal}">${signalLabel(signal)}</span>
       <span class="text-muted">${r.date||'—'}</span>
@@ -1166,7 +1230,7 @@ function valDoneRow(val) {
   const hasRaw = !!val.raw_legacy_text;
   return `<div class="val-item">
     <div class="val-item-hdr" onclick="${hasRaw?'this.nextElementSibling.classList.toggle(\'open\')':''}" style="${!hasRaw?'cursor:default':''}">
-      <span class="bold">${esc(asset?.symbol||'?')}</span>
+      <div><div class="bold">${esc(asset?.symbol||'?')}</div><div class="text-sm text-light">${esc(asset?.name||'')}</div></div>
       <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r?.question||'—')}</span>
       <span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>
       <span class="text-muted">${r?.date||'—'}</span>
@@ -1366,6 +1430,69 @@ async function saveModel() {
   document.getElementById('model-edit-id').value='';
   closeModal('modal-model'); renderModels(); updateStats();
   await saveToDrive('models');
+}
+
+// ── EDIT READING ─────────────────────────────────────────────
+function openEditReading(readingId) {
+  const r = DB.readings.find(x=>x.id===readingId); if(!r)return;
+  document.getElementById('reading-edit-id').value = readingId;
+  document.getElementById('re-date').value = r.date||'';
+  document.getElementById('re-target-date').value = r.target_date||'';
+  document.getElementById('re-horizon').value = r.time_horizon||'1W';
+  document.getElementById('re-signal').value = r.signal?.trend||'unclear';
+  document.getElementById('re-question').value = r.question||'';
+  document.getElementById('re-notes').value = r.interpretation?.notes||'';
+  // populate cards
+  const cc = document.getElementById('re-cards-container');
+  cc.innerHTML='';
+  (r.cards||[]).forEach(c=>{
+    const d=document.createElement('div'); d.className='card-entry';
+    d.innerHTML=`<input type="text" class="form-input re-card-name" value="${esc(c.card)}"><select class="form-select re-card-orient"><option value="upright">正位</option><option value="reversed">逆位</option></select><button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" style="color:var(--rose)">✕</button>`;
+    d.querySelector('.re-card-orient').value=c.orientation||'upright';
+    cc.appendChild(d);
+  });
+  if(!r.cards||!r.cards.length) addReCardEntry();
+  openModal('modal-reading');
+}
+function addReCardEntry() {
+  const c=document.getElementById('re-cards-container');
+  const d=document.createElement('div'); d.className='card-entry';
+  d.innerHTML=`<input type="text" class="form-input re-card-name" placeholder="牌名"><select class="form-select re-card-orient"><option value="upright">正位</option><option value="reversed">逆位</option></select><button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" style="color:var(--rose)">✕</button>`;
+  c.appendChild(d);
+}
+async function saveEditReading() {
+  const id=document.getElementById('reading-edit-id').value;
+  const idx=DB.readings.findIndex(r=>r.id===id); if(idx===-1)return;
+  const cards=[];
+  document.querySelectorAll('.re-card-name').forEach((el,i)=>{
+    const n=el.value.trim();
+    if(n) cards.push({position:i+1,card:n,orientation:el.nextElementSibling.value});
+  });
+  DB.readings[idx]={...DB.readings[idx],
+    date:document.getElementById('re-date').value,
+    target_date:document.getElementById('re-target-date').value,
+    time_horizon:document.getElementById('re-horizon').value,
+    signal:{...DB.readings[idx].signal,trend:document.getElementById('re-signal').value},
+    question:document.getElementById('re-question').value.trim(),
+    cards,
+    interpretation:{...DB.readings[idx].interpretation,notes:document.getElementById('re-notes').value.trim()},
+    updated_at:todayStr()
+  };
+  closeModal('modal-reading');
+  showAssetDetail(S.currentAssetId);
+  toast('占卜紀錄已更新','success');
+  await saveToDrive('readings');
+}
+async function deleteReading() {
+  const id=document.getElementById('reading-edit-id').value;
+  if(!confirm('確定要刪除這筆占卜紀錄？相關驗證也會一併移除。'))return;
+  DB.readings=DB.readings.filter(r=>r.id!==id);
+  DB.validations=DB.validations.filter(v=>v.reading_id!==id);
+  closeModal('modal-reading');
+  showAssetDetail(S.currentAssetId);
+  toast('已刪除','info');
+  await saveToDrive('readings');
+  await saveToDrive('validations');
 }
 
 // ── EXPORT / IMPORT ───────────────────────────────────────────
