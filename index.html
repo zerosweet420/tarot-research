@@ -1037,7 +1037,7 @@ function readingItem(r) {
   const val = DB.validations.find(v=>v.reading_id===r.id);
   const cards = (r.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
   const signal = r.signal?.trend||'unclear';
-  const legacy = r.legacy_id ? `<span class="text-light text-sm font-mono">#${r.legacy_id}</span>` : '';
+  const legacy = ''; // legacy_id retained in data but not shown in UI
   const rTags = (r.research_tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   const flags = (r.flags||[]).map(f=>`<span class="tag">🏷 ${f}</span>`).join('');
   let valSection = val
