@@ -563,7 +563,11 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <div class="section-label mt-12">Related Models</div>
       <div class="chip-select" id="val-model-chips"></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-validation')">取消</button><button class="btn btn-primary" onclick="saveValidation()">儲存驗證</button></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-remove-validation" onclick="removeValidation()" style="margin-right:auto;display:none">移除此驗證（回到待驗證）</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-validation')">取消</button>
+      <button class="btn btn-primary" onclick="saveValidation()">儲存驗證</button>
+    </div>
   </div>
 </div>
 
@@ -1255,6 +1259,7 @@ function openValidationModal(readingId, existingValId='') {
   document.getElementById('val-accuracy').value = ev?.accuracy||'';
   document.getElementById('val-outcome').value = ev?.outcome||'';
   document.getElementById('val-analysis').value = ev?.analysis||'';
+  document.getElementById('btn-remove-validation').style.display = ev ? 'inline-flex' : 'none';
   const signal = r?.signal?.trend||'unclear';
   const cards = (r?.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
   document.getElementById('val-reading-summary').innerHTML = `
@@ -1318,6 +1323,28 @@ async function saveValidation() {
     toast('驗證已儲存','success');
   }
   closeModal('modal-validation'); renderValidation(); renderDashboard();
+  await saveToDrive('validations');
+  await saveToDrive('models');
+}
+async function removeValidation() {
+  const editId = document.getElementById('val-edit-id').value;
+  if (!editId) return;
+  if (!confirm('確定要移除這筆驗證？該占卜紀錄將回到「待驗證」狀態。')) return;
+  const val = DB.validations.find(v => v.id === editId);
+  if (val) {
+    // Clean up evidence references in models
+    (val.related_model_ids || []).forEach(mid => {
+      const m = DB.models.find(x => x.id === mid);
+      if (m && m.evidence_reading_ids) {
+        m.evidence_reading_ids = m.evidence_reading_ids.filter(rid => rid !== val.reading_id);
+      }
+    });
+  }
+  DB.validations = DB.validations.filter(v => v.id !== editId);
+  closeModal('modal-validation');
+  renderValidation(); renderDashboard();
+  if (S.page === 'asset-detail' && S.currentAssetId) showAssetDetail(S.currentAssetId);
+  toast('驗證已移除，紀錄回到待驗證', 'info');
   await saveToDrive('validations');
   await saveToDrive('models');
 }
