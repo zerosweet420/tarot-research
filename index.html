@@ -1324,35 +1324,71 @@ async function saveValidation() {
 
 // ── CARD EXPLORER ─────────────────────────────────────────────
 function renderExplorer() {
-  const el = document.getElementById('explorer-table'); if (!el) return;
-  const q = (document.getElementById('explorer-search')?.value||'').toLowerCase();
-  const f = S.explorerFilter;
-  const map = {};
-  DB.readings.forEach(r=>{
-    (r.cards||[]).forEach(c=>{
+  const el = document.getElementById('explorer-table');
+  if (!el) return;
+  const q = (document.getElementById('explorer-search')?.value || '').toLowerCase();
+  const f = S.explorerFilter; // 'all' | 'upright' | 'reversed'
+
+  // Build cardName -> [{r, orient, pos}] map
+  const cardMap = {};
+  DB.readings.forEach(r => {
+    (r.cards || []).forEach(c => {
       if (!c.card) return;
-      if (!map[c.card]) map[c.card]={name:c.card,upright:0,reversed:0,hit:0,miss:0,partial:0,total:0};
-      map[c.card][c.orientation==='reversed'?'reversed':'upright']++;
-      map[c.card].total++;
-      const val=DB.validations.find(v=>v.reading_id===r.id);
-      if (val){if(val.accuracy==='hit')map[c.card].hit++;else if(val.accuracy==='miss')map[c.card].miss++;else map[c.card].partial++;}
+      const orient = c.orientation === 'reversed' ? 'reversed' : 'upright';
+      // Filter: skip if orientation doesn't match
+      if (f === 'upright' && orient !== 'upright') return;
+      if (f === 'reversed' && orient !== 'reversed') return;
+      if (!cardMap[c.card]) cardMap[c.card] = [];
+      cardMap[c.card].push({ r, orient, pos: c.position });
     });
   });
-  let cards = Object.values(map);
-  if (q) cards=cards.filter(c=>c.name.toLowerCase().includes(q));
-  if (f==='upright') cards=cards.filter(c=>c.upright>0);
-  if (f==='reversed') cards=cards.filter(c=>c.reversed>0);
-  cards.sort((a,b)=>b.total-a.total);
-  if (!cards.length){el.innerHTML='<div class="empty-state" style="padding:32px"><h3>尚無資料</h3></div>';return;}
-  el.innerHTML=cards.map(c=>{
-    const v=c.hit+c.miss+c.partial;
-    const hr=v?Math.round(c.hit/v*100):null;
-    return `<div class="card-stat-row">
-      <span class="bold">${esc(c.name)}</span>
-      <div>${hr!==null?`<div class="mini-bar"><div class="mini-bar-fill" style="width:${hr}%"></div></div>`:'<span class="text-light text-sm">未驗證</span>'}</div>
-      <span>${c.total}</span>
-      <span class="${hr!==null?'hit-rate':''}">${hr!==null?hr+'%':'—'}</span>
-      <span class="${c.miss?'miss-rate':''}">${c.miss||0}</span>
+
+  // Apply search filter
+  let entries = Object.entries(cardMap);
+  if (q) entries = entries.filter(([name]) => name.toLowerCase().includes(q));
+  // Sort by frequency
+  entries.sort((a, b) => b[1].length - a[1].length);
+
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:32px"><div class="icon">🃏</div><h3>尚無符合的牌</h3></div>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([cardName, readings]) => {
+    const uprightCount = readings.filter(x => x.orient === 'upright').length;
+    const reversedCount = readings.filter(x => x.orient === 'reversed').length;
+
+    const rows = readings.slice().reverse().map(({ r, orient }) => {
+      const asset = DB.assets.find(a => a.id === r.asset_id);
+      const val = DB.validations.find(v => v.reading_id === r.id);
+      const signal = r.signal?.trend || 'unclear';
+      return `<div style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border-light);font-size:12.5px">
+        <div>
+          <div class="bold" style="font-size:13px">${esc(asset?.symbol || '?')}</div>
+          <div class="text-light" style="font-size:11px">${esc(asset?.name || '')}</div>
+        </div>
+        <span class="card-chip ${orient === 'reversed' ? 'rev' : ''}" style="font-size:11px;justify-self:start">${orient === 'reversed' ? '逆位' : '正位'}</span>
+        <span class="text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${esc(r.question || '—')}</span>
+        <span class="badge badge-${signal}" style="font-size:10px;justify-self:start">${signalLabel(signal)}</span>
+        <span class="text-muted" style="font-size:12px">${r.date || '—'} → ${r.target_date || '—'}</span>
+        ${val
+          ? `<span class="badge badge-${val.accuracy}" style="font-size:10px;justify-self:start">${accuracyLabel(val.accuracy)}</span>`
+          : `<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 6px;justify-self:start" onclick="openValidationModal('${r.id}')">填寫驗證</button>`
+        }
+      </div>`;
+    }).join('');
+
+    return `<div class="card mb-12">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:17px;font-weight:700;font-family:'Crimson Pro',serif">${esc(cardName)}</span>
+        <span class="badge badge-neutral">${readings.length} 次出現</span>
+        ${uprightCount ? `<span class="tag">正位 ${uprightCount}</span>` : ''}
+        ${reversedCount ? `<span class="tag" style="background:var(--rose-light);color:var(--rose)">逆位 ${reversedCount}</span>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;gap:8px;padding:5px 14px;background:var(--bg);font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em">
+        <span>標的</span><span>方位</span><span>問題</span><span>信號</span><span>日期</span><span>驗證</span>
+      </div>
+      ${rows}
     </div>`;
   }).join('');
 }
