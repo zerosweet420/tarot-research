@@ -988,7 +988,7 @@ function renderAssets() {
   const f = S.assetFilter;
   let list = DB.assets.filter(a => {
     const mq = !q || a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || (a.tags||[]).some(t=>t.toLowerCase().includes(q));
-    const mf = f==='all' || a.market===f || a.priority===f;
+    const mf = f==='all' || a.market===f || (a.priority||'watch')===f;
     return mq && mf;
   });
   if (!list.length) { c.innerHTML='<div class="empty-state"><div class="icon">📊</div><h3>尚無標的</h3></div>'; return; }
@@ -1051,9 +1051,9 @@ function readingItem(r) {
        ${val.analysis?`<div class="text-sm text-muted mb-8">${esc(val.analysis)}</div>`:''}
        ${val.raw_legacy_text?`<div class="detail-label mt-8">原始驗證文字</div><div class="legacy-text">${esc(val.raw_legacy_text)}</div>`:''}
        <button class="btn btn-ghost btn-sm mt-8" onclick="openValidationModal('${r.id}','${val.id}')">✏️ 編輯驗證</button>`
-    : `<div class="mt-8"><button class="btn btn-sm btn-secondary" onclick="openValidationModal('${r.id}')">填寫驗證</button></div>`;
+    : `<div class="mt-8"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button></div>`;
   return `<div class="reading-item">
-    <div class="reading-item-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
+    <div class="reading-item-hdr" data-reading-id="${r.id}" onclick="this.nextElementSibling.classList.toggle('open')">
       <div class="flex items-center gap-8">
         ${legacy}
         <span class="bold" style="font-family:'Crimson Pro',serif">${r.date||'—'}</span>
@@ -1220,7 +1220,7 @@ function valPendingRow(r, today) {
     <div class="val-item-body">
       <div class="cards-display">${cards}</div>
       ${r.interpretation?.notes?`<div class="text-sm text-muted mb-12">${esc(r.interpretation.notes)}</div>`:''}
-      <button class="btn btn-primary btn-sm" onclick="openValidationModal('${r.id}')">填寫驗證</button>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>
     </div>
   </div>`;
 }
@@ -1323,6 +1323,24 @@ async function saveValidation() {
 }
 
 // ── CARD EXPLORER ─────────────────────────────────────────────
+function goToReading(assetId, readingId) {
+  showAssetDetail(assetId);
+  // After render, find and expand the reading
+  setTimeout(() => {
+    const bodies = document.querySelectorAll('.reading-item-body');
+    const hdrs = document.querySelectorAll('.reading-item-hdr');
+    // Find reading by data attribute
+    const target = document.querySelector(`[data-reading-id="${readingId}"]`);
+    if (target) {
+      target.nextElementSibling.classList.add('open');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight briefly
+      target.parentElement.style.outline = '2px solid var(--lavender)';
+      setTimeout(() => target.parentElement.style.outline = '', 2000);
+    }
+  }, 100);
+}
+
 function renderExplorer() {
   const el = document.getElementById('explorer-table');
   if (!el) return;
@@ -1362,7 +1380,7 @@ function renderExplorer() {
       const asset = DB.assets.find(a => a.id === r.asset_id);
       const val = DB.validations.find(v => v.reading_id === r.id);
       const signal = r.signal?.trend || 'unclear';
-      return `<div style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border-light);font-size:12.5px">
+      return `<div onclick="goToReading('${r.asset_id}','${r.id}')" style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border-light);font-size:12.5px;cursor:pointer" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
         <div>
           <div class="bold" style="font-size:13px">${esc(asset?.symbol || '?')}</div>
           <div class="text-light" style="font-size:11px">${esc(asset?.name || '')}</div>
@@ -1373,7 +1391,7 @@ function renderExplorer() {
         <span class="text-muted" style="font-size:12px">${r.date || '—'} → ${r.target_date || '—'}</span>
         ${val
           ? `<span class="badge badge-${val.accuracy}" style="font-size:10px;justify-self:start">${accuracyLabel(val.accuracy)}</span>`
-          : `<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 6px;justify-self:start" onclick="openValidationModal('${r.id}')">填寫驗證</button>`
+          : `<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 6px;justify-self:start" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>`
         }
       </div>`;
     }).join('');
