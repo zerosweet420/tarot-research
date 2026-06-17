@@ -242,11 +242,45 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
 .text-muted{color:var(--text-muted)}.text-light{color:var(--text-light)}
 .text-sm{font-size:12px}.bold{font-weight:600}.font-mono{font-family:monospace}
+
+/* ── MOBILE RESPONSIVE ── */
+#nav-overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.4);z-index:99}
+#nav-overlay.open{display:block}
+#hamburger{display:none;background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);padding:4px 8px;border-radius:6px}
+#hamburger:hover{background:var(--bg-hover)}
+@media (max-width: 768px) {
+  #nav{transform:translateX(-100%);transition:transform .25s ease;width:240px;box-shadow:var(--shadow-lg)}
+  #nav.open{transform:translateX(0)}
+  #main{margin-left:0}
+  #hamburger{display:flex;align-items:center;justify-content:center;position:fixed;top:12px;left:12px;z-index:101;background:var(--bg-card);box-shadow:var(--shadow-md);width:38px;height:38px}
+  .page-header{padding:0 14px 0 56px;gap:8px}
+  .page-header h2{font-size:18px}
+  .page-content{padding:14px 14px}
+  .page-header-actions{flex-wrap:wrap;gap:6px}
+  .date-nav{font-size:12px}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  .detail-grid{grid-template-columns:1fr}
+  .watch-row,.watch-row-hdr,.val-item-hdr{grid-template-columns:60px 1fr 60px;font-size:11px;gap:6px;padding:8px 10px}
+  .watch-row span:nth-child(4),.watch-row span:nth-child(5),
+  .watch-row-hdr span:nth-child(4),.watch-row-hdr span:nth-child(5),
+  .val-item-hdr span:nth-child(4),.val-item-hdr span:nth-child(5){display:none}
+  .asset-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .card-stat-row.hdr{display:none}
+  .modal{max-width:94vw;margin:0 8px}
+  .modal-body{padding:14px 16px}
+  .modal-header,.modal-footer{padding:14px 16px}
+  .filter-bar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  .filter-chip{flex-shrink:0}
+  .search-bar{max-width:none !important}
+  .gate-card{padding:32px 24px;max-width:90vw}
+}
 </style>
 </head>
 <body>
 
 <!-- NAV -->
+<div id="nav-overlay" onclick="closeNav()"></div>
 <nav id="nav">
   <div class="nav-logo"><h1>🃏 塔羅研究</h1><p>Stock Research System</p></div>
   <div class="nav-item" id="nav-dashboard" onclick="showPage('dashboard')" data-page="dashboard"><span class="icon">🏠</span>Dashboard</div>
@@ -263,6 +297,7 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 </nav>
 
 <!-- MAIN -->
+<button id="hamburger" onclick="toggleNav()">☰</button>
 <div id="main">
 
   <!-- GATE (shown when not connected) -->
@@ -819,8 +854,19 @@ function driveFetch(url, opts = {}) {
   });
 }
 
+// ── MOBILE NAV ────────────────────────────────────────────────
+function toggleNav() {
+  document.getElementById('nav').classList.toggle('open');
+  document.getElementById('nav-overlay').classList.toggle('open');
+}
+function closeNav() {
+  document.getElementById('nav').classList.remove('open');
+  document.getElementById('nav-overlay').classList.remove('open');
+}
+
 // ── NAVIGATION ────────────────────────────────────────────────
 function showPage(name) {
+  closeNav(); // auto-close mobile nav on navigation
   document.querySelectorAll('#app .page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const pageEl = document.getElementById('page-' + name);
