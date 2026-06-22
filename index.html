@@ -360,6 +360,38 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .r-card-question{font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .r-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light)}
 
+/* ── CARD EXPLORER V2 ── */
+.explorer-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px;align-items:start}
+.explorer-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;transition:box-shadow .15s, border-color .15s;
+}
+.explorer-card:hover{box-shadow:var(--shadow-md);border-color:var(--lavender-mid)}
+.explorer-card-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.explorer-card-name{font-family:'Crimson Pro',serif;font-size:18px;font-weight:700}
+.explorer-card-count{font-size:11px;color:var(--text-light)}
+.explorer-card-rate-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.explorer-card-rate{font-size:20px;font-weight:700;font-family:'Crimson Pro',serif}
+.explorer-card-rate.good{color:var(--mint)}
+.explorer-card-rate.mid{color:var(--amber)}
+.explorer-card-rate.low{color:var(--rose)}
+.explorer-card-rate.none{color:var(--text-light);font-size:13px}
+.explorer-card-orient{display:flex;gap:6px}
+.explorer-mini-bar{height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:8px}
+.explorer-mini-bar-fill{height:100%;border-radius:3px}
+.explorer-mini-bar-fill.good{background:var(--mint)}
+.explorer-mini-bar-fill.mid{background:var(--amber)}
+.explorer-mini-bar-fill.low{background:var(--rose)}
+.explorer-detail-panel{
+  display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-light);
+}
+.explorer-detail-panel.open{display:block}
+.explorer-detail-row{
+  display:grid;grid-template-columns:90px 60px 1fr 70px 100px 80px;align-items:center;gap:6px;
+  padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12px;
+}
+.explorer-detail-row:last-child{border-bottom:none}
+
 /* ── MOBILE RESPONSIVE ── */
 #nav-overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.4);z-index:99}
 #nav-overlay.open{display:block}
@@ -566,15 +598,19 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   <div id="page-explorer" class="page">
     <div class="page-header"><h2>Card Explorer</h2></div>
     <div class="page-content">
-      <div class="flex gap-8 mb-12 items-center">
+      <div class="flex gap-8 mb-12 items-center" style="flex-wrap:wrap">
         <div class="search-bar" style="max-width:280px"><span>🔍</span><input type="text" placeholder="搜尋牌名…" oninput="renderExplorer()" id="explorer-search"></div>
         <div class="filter-bar" style="margin-bottom:0">
           <button class="filter-chip active" onclick="setFilter('explorer','all',this)">全部</button>
           <button class="filter-chip" onclick="setFilter('explorer','upright',this)">正位</button>
           <button class="filter-chip" onclick="setFilter('explorer','reversed',this)">逆位</button>
         </div>
+        <div class="filter-bar" style="margin-bottom:0;margin-left:auto">
+          <button class="filter-chip active" onclick="setExplorerSort('count',this)">依出現次數</button>
+          <button class="filter-chip" onclick="setExplorerSort('rate',this)">依命中率</button>
+        </div>
       </div>
-      <div id="explorer-table"></div>
+      <div id="explorer-table" class="explorer-grid"></div>
     </div>
   </div>
 
@@ -760,6 +796,7 @@ let S = {
   assetFilter: 'all',
   modelFilter: 'current',
   explorerFilter: 'all',
+  explorerSort: 'count',
   currentAssetId: null
 };
 let selectedSignal = null;
@@ -1632,11 +1669,19 @@ function goToReading(assetId, readingId) {
   }, 100);
 }
 
+function setExplorerSort(mode, el) {
+  S.explorerSort = mode;
+  el.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderExplorer();
+}
+
 function renderExplorer() {
   const el = document.getElementById('explorer-table');
   if (!el) return;
   const q = (document.getElementById('explorer-search')?.value || '').toLowerCase();
   const f = S.explorerFilter; // 'all' | 'upright' | 'reversed'
+  const sortMode = S.explorerSort || 'count';
 
   // Build cardName -> [{r, orient, pos}] map
   const cardMap = {};
@@ -1644,7 +1689,6 @@ function renderExplorer() {
     (r.cards || []).forEach(c => {
       if (!c.card) return;
       const orient = c.orientation === 'reversed' ? 'reversed' : 'upright';
-      // Filter: skip if orientation doesn't match
       if (f === 'upright' && orient !== 'upright') return;
       if (f === 'reversed' && orient !== 'reversed') return;
       if (!cardMap[c.card]) cardMap[c.card] = [];
@@ -1652,54 +1696,94 @@ function renderExplorer() {
     });
   });
 
-  // Apply search filter
   let entries = Object.entries(cardMap);
   if (q) entries = entries.filter(([name]) => name.toLowerCase().includes(q));
-  // Sort by frequency
-  entries.sort((a, b) => b[1].length - a[1].length);
 
-  if (!entries.length) {
+  // Compute stats for each card
+  const stats = entries.map(([cardName, readings]) => {
+    const uprightCount = readings.filter(x => x.orient === 'upright').length;
+    const reversedCount = readings.filter(x => x.orient === 'reversed').length;
+    let hit = 0, miss = 0, partial = 0, validatedTotal = 0;
+    readings.forEach(({ r }) => {
+      const val = DB.validations.find(v => v.reading_id === r.id);
+      if (!val) return;
+      validatedTotal++;
+      if (val.accuracy === 'hit') hit++;
+      else if (val.accuracy === 'miss') miss++;
+      else partial++;
+    });
+    const rate = validatedTotal ? hit / validatedTotal : null;
+    return { cardName, readings, uprightCount, reversedCount, hit, miss, partial, validatedTotal, rate };
+  });
+
+  // Sort
+  if (sortMode === 'rate') {
+    stats.sort((a, b) => {
+      // cards with no validation go last
+      if (a.rate === null && b.rate === null) return b.readings.length - a.readings.length;
+      if (a.rate === null) return 1;
+      if (b.rate === null) return -1;
+      return b.rate - a.rate || b.validatedTotal - a.validatedTotal;
+    });
+  } else {
+    stats.sort((a, b) => b.readings.length - a.readings.length);
+  }
+
+  if (!stats.length) {
     el.innerHTML = '<div class="empty-state" style="padding:32px"><div class="icon">🃏</div><h3>尚無符合的牌</h3></div>';
     return;
   }
 
-  el.innerHTML = entries.map(([cardName, readings]) => {
-    const uprightCount = readings.filter(x => x.orient === 'upright').length;
-    const reversedCount = readings.filter(x => x.orient === 'reversed').length;
+  el.innerHTML = stats.map(s => explorerCard(s)).join('');
+}
 
-    const rows = readings.slice().reverse().map(({ r, orient }) => {
-      const asset = DB.assets.find(a => a.id === r.asset_id);
-      const val = DB.validations.find(v => v.reading_id === r.id);
-      const signal = r.signal?.trend || 'unclear';
-      return `<div onclick="goToReading('${r.asset_id}','${r.id}')" style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border-light);font-size:12.5px;cursor:pointer" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
-        <div>
-          <div class="bold" style="font-size:13px">${esc(asset?.symbol || '?')}</div>
-          <div class="text-light" style="font-size:11px">${esc(asset?.name || '')}</div>
-        </div>
-        <span class="card-chip ${orient === 'reversed' ? 'rev' : ''}" style="font-size:11px;justify-self:start">${orient === 'reversed' ? '逆位' : '正位'}</span>
-        <span class="text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${esc(r.question || '—')}</span>
-        <span class="badge badge-${signal}" style="font-size:10px;justify-self:start">${signalLabel(signal)}</span>
-        <span class="text-muted" style="font-size:12px">${r.date || '—'} → ${r.target_date || '—'}</span>
-        ${val
-          ? `<span class="badge badge-${val.accuracy}" style="font-size:10px;justify-self:start">${accuracyLabel(val.accuracy)}</span>`
-          : `<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 6px;justify-self:start" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>`
-        }
-      </div>`;
-    }).join('');
+function explorerCard(s) {
+  const pct = s.rate !== null ? Math.round(s.rate * 100) : null;
+  const rateCls = pct === null ? 'none' : pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'low';
+  const barCls = pct === null ? '' : pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'low';
+  const cardId = 'exc_' + s.cardName.replace(/[^a-zA-Z0-9一-龥]/g, '');
 
-    return `<div class="card mb-12">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:17px;font-weight:700;font-family:'Crimson Pro',serif">${esc(cardName)}</span>
-        <span class="badge badge-neutral">${readings.length} 次出現</span>
-        ${uprightCount ? `<span class="tag">正位 ${uprightCount}</span>` : ''}
-        ${reversedCount ? `<span class="tag" style="background:var(--rose-light);color:var(--rose)">逆位 ${reversedCount}</span>` : ''}
+  const detailRows = s.readings.slice().reverse().map(({ r, orient }) => {
+    const asset = DB.assets.find(a => a.id === r.asset_id);
+    const val = DB.validations.find(v => v.reading_id === r.id);
+    const signal = r.signal?.trend || 'unclear';
+    return `<div class="explorer-detail-row" onclick="event.stopPropagation();goToReading('${r.asset_id}','${r.id}')" style="cursor:pointer">
+      <div>
+        <div class="bold" style="font-size:12px">${esc(asset?.symbol || '?')}</div>
+        <div class="text-light" style="font-size:10.5px">${esc(asset?.name || '')}</div>
       </div>
-      <div style="display:grid;grid-template-columns:110px 70px 1fr 80px 110px 90px;gap:8px;padding:5px 14px;background:var(--bg);font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em">
-        <span>標的</span><span>方位</span><span>問題</span><span>信號</span><span>日期</span><span>驗證</span>
-      </div>
-      ${rows}
+      <span class="card-chip ${orient === 'reversed' ? 'rev' : ''}" style="font-size:10.5px">${orient === 'reversed' ? '逆位' : '正位'}</span>
+      <span class="text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px">${esc(r.question || '—')}</span>
+      <span class="badge badge-${signal}" style="font-size:10px">${signalLabel(signal)}</span>
+      <span class="text-muted" style="font-size:11px">${r.date || '—'}→${r.target_date || '—'}</span>
+      ${val
+        ? `<span class="badge badge-${val.accuracy}" style="font-size:10px">${accuracyLabel(val.accuracy)}</span>`
+        : `<button class="btn btn-sm btn-ghost" style="font-size:10.5px;padding:1px 5px" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>`
+      }
     </div>`;
   }).join('');
+
+  return `<div class="explorer-card" onclick="toggleExplorerCard('${cardId}')">
+    <div class="explorer-card-top">
+      <span class="explorer-card-name">${esc(s.cardName)}</span>
+      <span class="explorer-card-count">${s.readings.length} 次出現</span>
+    </div>
+    <div class="explorer-card-rate-row">
+      <span class="explorer-card-rate ${rateCls}">${pct !== null ? pct + '%' : '尚無驗證'}</span>
+      <div class="explorer-card-orient">
+        ${s.uprightCount ? `<span class="tag">正 ${s.uprightCount}</span>` : ''}
+        ${s.reversedCount ? `<span class="tag" style="background:var(--rose-light);color:var(--rose)">逆 ${s.reversedCount}</span>` : ''}
+      </div>
+    </div>
+    ${pct !== null ? `<div class="explorer-mini-bar"><div class="explorer-mini-bar-fill ${barCls}" style="width:${pct}%"></div></div>` : ''}
+    <div class="text-sm text-light">已驗證 ${s.validatedTotal} 次（命中${s.hit}・部分${s.partial}・未中${s.miss}）</div>
+    <div class="explorer-detail-panel" id="${cardId}">${detailRows || '<div class="text-light text-sm" style="padding:6px 0">尚無紀錄</div>'}</div>
+  </div>`;
+}
+
+function toggleExplorerCard(cardId) {
+  const panel = document.getElementById(cardId);
+  if (panel) panel.classList.toggle('open');
 }
 
 // ── RESEARCH MODELS ───────────────────────────────────────────
