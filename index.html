@@ -1154,15 +1154,20 @@ function renderUrgentSection() {
 // Manual override stored in reading.interpretation.key_action ('buy'|'sell'|'none')
 // Falls back to auto-suggestion based on signal trend reversal pattern
 function getKeyAction(asset, sortedReadings, latestReading) {
-  // 1. Manual override on the latest/relevant reading takes priority
-  if (latestReading?.interpretation?.key_action === 'buy') return 'buy';
-  if (latestReading?.interpretation?.key_action === 'sell') return 'sell';
-  if (latestReading?.interpretation?.key_action === 'none') return null;
+  const today = todayStr();
+
+  // 1. Manual override — only honor it if the reading's target_date is today or in the future.
+  //    A manually-tagged PAST reading should not keep showing the icon on the card.
+  const isRelevant = latestReading?.target_date && latestReading.target_date >= today;
+  if (isRelevant) {
+    if (latestReading?.interpretation?.key_action === 'buy') return 'buy';
+    if (latestReading?.interpretation?.key_action === 'sell') return 'sell';
+    if (latestReading?.interpretation?.key_action === 'none') return null;
+  }
 
   // 2. Auto-suggest: look at the last 3 by-day readings (time_horizon='1D') with target_date <= today
   // Pattern: if recent trend was bear/bear and now flips to bull => potential buy point (反轉向上)
   //          if recent trend was bull/bull and now flips to bear => potential sell point (反轉向下)
-  const today = todayStr();
   const dailyReadings = sortedReadings.filter(r => r.time_horizon === '1D' && r.target_date);
   const recentDaily = dailyReadings.filter(r => r.target_date <= today).slice(-3);
   if (recentDaily.length < 2) return null;
@@ -1195,10 +1200,14 @@ function renderWatchCards() {
     const hits = validatedReadings.filter(r => DB.validations.find(v => v.reading_id === r.id)?.accuracy === 'hit').length;
     const hitRate = validatedReadings.length ? Math.round(hits / validatedReadings.length * 100) : null;
 
-    // Latest reading (most recent target_date with a value, prefer not-yet-validated/future)
+    // Only consider daily (1D) readings for signal direction, next due date, and card sequence —
+    // monthly/weekly overview readings are excluded to keep the card consistent and not misleading
+    const dailyOnly = readings.filter(r => r.time_horizon === '1D');
+
+    // Latest daily reading (soonest upcoming, otherwise most recent past)
     const today = todayStr();
-    const upcoming = readings.filter(r => r.target_date && r.target_date >= today);
-    const latest = upcoming.length ? upcoming[0] : readings[readings.length - 1];
+    const upcomingDaily = dailyOnly.filter(r => r.target_date && r.target_date >= today);
+    const latest = upcomingDaily.length ? upcomingDaily[0] : dailyOnly[dailyOnly.length - 1];
 
     const signal = latest?.signal?.trend || 'unclear';
     const nextDate = latest?.target_date || '—';
@@ -1206,8 +1215,9 @@ function renderWatchCards() {
     // Key action: manual override takes priority, otherwise auto-suggest
     const keyAction = getKeyAction(asset, readings, latest);
 
-    // Last 5 cards sequence (most recent by target_date)
-    const recent5 = readings.slice(-5);
+    // Last 5 cards sequence — only from daily (1D) single-card readings,
+    // excluding monthly/weekly overview readings which have multiple cards bundled together
+    const recent5 = dailyOnly.slice(-5);
     const seqHtml = recent5.map(r => {
       const val = DB.validations.find(v => v.reading_id === r.id);
       const card = r.cards?.[0];
