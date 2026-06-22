@@ -361,8 +361,13 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .r-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light)}
 
 /* ── CARD EXPLORER V2 ── */
-.explorer-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px;align-items:start}
+.explorer-grid{column-count:1;column-gap:12px}
+@media (min-width: 700px){.explorer-grid{column-count:2}}
+@media (min-width: 1100px){.explorer-grid{column-count:3}}
+@media (min-width: 1500px){.explorer-grid{column-count:4}}
+@media (min-width: 1900px){.explorer-grid{column-count:5}}
 .explorer-card{
+  break-inside:avoid;margin-bottom:12px;display:inline-block;width:100%;
   background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
   padding:14px 16px;cursor:pointer;transition:box-shadow .15s, border-color .15s;
 }
@@ -387,10 +392,11 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 }
 .explorer-detail-panel.open{display:block}
 .explorer-detail-row{
-  display:grid;grid-template-columns:90px 60px 1fr 70px 100px 80px;align-items:center;gap:6px;
+  display:grid;grid-template-columns:1fr 60px 80px;align-items:center;gap:6px;
   padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12px;
 }
 .explorer-detail-row:last-child{border-bottom:none}
+.explorer-detail-asset{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 /* ── MOBILE RESPONSIVE ── */
 #nav-overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.4);z-index:99}
@@ -1748,17 +1754,14 @@ function explorerCard(s) {
     const val = DB.validations.find(v => v.reading_id === r.id);
     const signal = r.signal?.trend || 'unclear';
     return `<div class="explorer-detail-row" onclick="event.stopPropagation();goToReading('${r.asset_id}','${r.id}')" style="cursor:pointer">
-      <div>
-        <div class="bold" style="font-size:12px">${esc(asset?.symbol || '?')}</div>
-        <div class="text-light" style="font-size:10.5px">${esc(asset?.name || '')}</div>
+      <div class="explorer-detail-asset" title="${esc(asset?.symbol || '?')} ${esc(asset?.name || '')}">
+        <span class="bold" style="font-size:12px">${esc(asset?.symbol || '?')}</span>
+        <span class="text-light" style="font-size:10.5px"> ${esc(asset?.name || '')}</span>
       </div>
-      <span class="card-chip ${orient === 'reversed' ? 'rev' : ''}" style="font-size:10.5px">${orient === 'reversed' ? '逆位' : '正位'}</span>
-      <span class="text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px">${esc(r.question || '—')}</span>
-      <span class="badge badge-${signal}" style="font-size:10px">${signalLabel(signal)}</span>
-      <span class="text-muted" style="font-size:11px">${r.date || '—'}→${r.target_date || '—'}</span>
+      <span class="card-chip ${orient === 'reversed' ? 'rev' : ''}" style="font-size:10.5px;justify-self:start">${orient === 'reversed' ? '逆位' : '正位'}</span>
       ${val
-        ? `<span class="badge badge-${val.accuracy}" style="font-size:10px">${accuracyLabel(val.accuracy)}</span>`
-        : `<button class="btn btn-sm btn-ghost" style="font-size:10.5px;padding:1px 5px" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>`
+        ? `<span class="badge badge-${val.accuracy}" style="font-size:10px;justify-self:start">${accuracyLabel(val.accuracy)}</span>`
+        : `<button class="btn btn-sm btn-ghost" style="font-size:10.5px;padding:1px 5px;justify-self:start" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button>`
       }
     </div>`;
   }).join('');
