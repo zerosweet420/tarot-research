@@ -311,6 +311,54 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .top-card-rate.mid{color:var(--amber)}
 .top-card-count{color:var(--text-light);text-align:right;font-size:11px}
 
+/* ── ASSET DETAIL V2 ── */
+.asset-compact-header{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 16px;margin-bottom:16px;
+}
+.asset-compact-symbol{font-family:'Crimson Pro',serif;font-size:20px;font-weight:700}
+.asset-compact-name{font-size:13px;color:var(--text-muted)}
+.asset-compact-divider{width:1px;height:20px;background:var(--border)}
+.asset-compact-tags{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.asset-compact-notes{
+  width:100%;font-size:12px;color:var(--text-light);margin-top:4px;
+  padding-top:8px;border-top:1px solid var(--border-light);
+}
+
+.reading-group{margin-bottom:24px}
+.reading-group-label{
+  font-size:12px;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.reading-group-count{
+  font-size:11px;font-weight:500;color:#fff;background:var(--text-light);
+  border-radius:10px;padding:1px 8px;
+}
+.reading-group-count.pending{background:var(--rose)}
+.reading-group-count.hit{background:var(--mint)}
+.reading-group-count.partial{background:var(--amber)}
+.reading-group-count.miss{background:var(--text-light)}
+.reading-cards-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:10px}
+
+.r-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;transition:box-shadow .15s, border-color .15s;
+  border-left:3px solid var(--border);
+}
+.r-card:hover{box-shadow:var(--shadow-md)}
+.r-card.pending{border-left-color:var(--rose)}
+.r-card.hit{border-left-color:var(--mint)}
+.r-card.partial{border-left-color:var(--amber)}
+.r-card.miss{border-left-color:var(--text-light)}
+.r-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.r-card-dates{font-size:12px;color:var(--text-muted)}
+.r-card-dates .arrow{color:var(--text-light);margin:0 3px}
+.r-card-cards{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.r-card-question{font-size:12px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light)}
+
 /* ── MOBILE RESPONSIVE ── */
 #nav-overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.4);z-index:99}
 #nav-overlay.open{display:block}
@@ -1186,26 +1234,87 @@ function showAssetDetail(assetId) {
   document.getElementById('detail-header-title').textContent = `${asset.symbol} · ${asset.name}`;
   const readings = DB.readings.filter(r=>r.asset_id===assetId).slice().reverse();
   const tags = (asset.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-  document.getElementById('asset-detail-content').innerHTML =
-    `<div class="card mb-16"><div class="card-body">
-      <div class="detail-grid">
-        <div class="detail-field"><div class="detail-label">代號</div><div class="detail-value" style="font-family:'Crimson Pro',serif;font-size:22px;font-weight:600">${esc(asset.symbol)}</div></div>
-        <div class="detail-field"><div class="detail-label">市場</div><div class="detail-value">${asset.market==='TW'?'🇹🇼 台股':'🇺🇸 美股'}</div></div>
-        <div class="detail-field"><div class="detail-label">名稱</div><div class="detail-value">${esc(asset.name)}</div></div>
-        <div class="detail-field"><div class="detail-label">優先級</div><div class="detail-value"><span class="badge badge-${asset.priority||'watch'}">${priorityLabel(asset.priority||'watch')}</span></div></div>
-      </div>
-      ${tags?`<div class="tags-wrap">${tags}</div>`:''}
-      ${asset.notes?`<div class="text-muted text-sm mt-8">${esc(asset.notes)}</div>`:''}
-    </div></div>
-    <div class="section-label">占卜紀錄 <span style="color:var(--text-light);font-size:11px">${readings.length} 筆</span></div>
-    ${readings.length ? readings.map(r=>readingItem(r)).join('') : '<div class="empty-state"><div class="icon">🃏</div><h3>尚無占卜紀錄</h3></div>'}`;
+
+  // Compact header
+  const headerHtml = `<div class="asset-compact-header">
+    <span class="asset-compact-symbol">${esc(asset.symbol)}</span>
+    <span class="asset-compact-name">${esc(asset.name)}</span>
+    <div class="asset-compact-divider"></div>
+    <span class="text-sm">${asset.market==='TW'?'🇹🇼 台股':'🇺🇸 美股'}</span>
+    <div class="asset-compact-divider"></div>
+    <span class="badge badge-${asset.priority||'watch'}">${priorityLabel(asset.priority||'watch')}</span>
+    ${tags?`<div class="asset-compact-tags">${tags}</div>`:''}
+    ${asset.notes?`<div class="asset-compact-notes">${esc(asset.notes)}</div>`:''}
+  </div>`;
+
+  // Group readings by validation status
+  const groups = { pending: [], hit: [], partial: [], miss: [] };
+  readings.forEach(r => {
+    const val = DB.validations.find(v => v.reading_id === r.id);
+    if (!val) groups.pending.push(r);
+    else if (val.accuracy === 'hit') groups.hit.push(r);
+    else if (val.accuracy === 'partial') groups.partial.push(r);
+    else groups.miss.push(r);
+  });
+
+  const groupMeta = {
+    pending: { label: '⏳ 待驗證', icon: 'pending' },
+    hit: { label: '✓ 命中', icon: 'hit' },
+    partial: { label: '△ 部分符合', icon: 'partial' },
+    miss: { label: '✕ 未命中', icon: 'miss' }
+  };
+
+  let groupsHtml = '';
+  for (const key of ['pending', 'hit', 'partial', 'miss']) {
+    const items = groups[key];
+    if (!items.length) continue;
+    const meta = groupMeta[key];
+    groupsHtml += `<div class="reading-group">
+      <div class="reading-group-label">${meta.label} <span class="reading-group-count ${meta.icon}">${items.length}</span></div>
+      <div class="reading-cards-grid">${items.map(r => readingCard(r, key)).join('')}</div>
+    </div>`;
+  }
+
+  if (!readings.length) {
+    groupsHtml = '<div class="empty-state"><div class="icon">🃏</div><h3>尚無占卜紀錄</h3></div>';
+  }
+
+  document.getElementById('asset-detail-content').innerHTML = headerHtml + groupsHtml;
   showPage('asset-detail');
 }
-function readingItem(r) {
+
+function readingCard(r, statusKey) {
   const val = DB.validations.find(v=>v.reading_id===r.id);
   const cards = (r.cards||[]).map(c=>`<span class="card-chip ${c.orientation==='reversed'?'rev':''}">${esc(c.card)}${c.orientation==='reversed'?' 逆':''}</span>`).join('');
   const signal = r.signal?.trend||'unclear';
-  const legacy = ''; // legacy_id retained in data but not shown in UI
+  return `<div class="r-card ${statusKey}" onclick="toggleReadingDetail(this, '${r.id}')">
+    <div class="r-card-top">
+      <span class="r-card-dates">${r.date||'—'}<span class="arrow">→</span>${r.target_date||'—'}</span>
+      <span class="badge badge-${signal}">${signalLabel(signal)}</span>
+    </div>
+    ${r.question?`<div class="r-card-question">${esc(r.question)}</div>`:''}
+    <div class="r-card-cards">${cards}</div>
+    <div class="r-card-footer">
+      <span class="text-sm text-light">${r.time_horizon||''}</span>
+      <div class="flex gap-6 items-center">
+        ${val?`<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditReading('${r.id}')" style="padding:2px 6px;font-size:11px">✏️</button>
+      </div>
+    </div>
+    <div class="reading-item-body" data-reading-id="${r.id}" style="margin-top:0"></div>
+  </div>`;
+}
+
+function toggleReadingDetail(cardEl, readingId) {
+  const body = cardEl.querySelector('.reading-item-body');
+  const isOpen = body.classList.contains('open');
+  if (isOpen) {
+    body.classList.remove('open');
+    body.innerHTML = '';
+    return;
+  }
+  const r = DB.readings.find(x => x.id === readingId);
+  const val = DB.validations.find(v => v.reading_id === readingId);
   const rTags = (r.research_tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   const flags = (r.flags||[]).map(f=>`<span class="tag">🏷 ${f}</span>`).join('');
   let valSection = val
@@ -1218,33 +1327,16 @@ function readingItem(r) {
        </div>
        ${val.analysis?`<div class="text-sm text-muted mb-8">${esc(val.analysis)}</div>`:''}
        ${val.raw_legacy_text?`<div class="detail-label mt-8">原始驗證文字</div><div class="legacy-text">${esc(val.raw_legacy_text)}</div>`:''}
-       <button class="btn btn-ghost btn-sm mt-8" onclick="openValidationModal('${r.id}','${val.id}')">✏️ 編輯驗證</button>`
+       <button class="btn btn-ghost btn-sm mt-8" onclick="event.stopPropagation();openValidationModal('${r.id}','${val.id}')">✏️ 編輯驗證</button>`
     : `<div class="mt-8"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openValidationModal('${r.id}')">填寫驗證</button></div>`;
-  return `<div class="reading-item">
-    <div class="reading-item-hdr" data-reading-id="${r.id}" onclick="this.nextElementSibling.classList.toggle('open')">
-      <div class="flex items-center gap-8">
-        ${legacy}
-        <span class="bold" style="font-family:'Crimson Pro',serif">${r.date||'—'}</span>
-        <span class="text-muted text-sm">→ ${r.target_date||'—'}</span>
-        <span class="badge badge-${signal}">${signalLabel(signal)}</span>
-        ${val?`<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>`:''}
-      </div>
-      <div class="flex items-center gap-8">
-        <span class="text-sm text-muted">${r.time_horizon||''}</span>
-        ${r.signal?.status?`<span class="tag">${r.signal.status}</span>`:''}
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditReading('${r.id}')" style="padding:2px 6px;font-size:11px">✏️</button>
-        <span class="text-muted">›</span>
-      </div>
-    </div>
-    <div class="reading-item-body">
-      ${r.question?`<div class="mb-8"><span class="text-light text-sm">問題：</span>${esc(r.question)}</div>`:''}
-      <div class="cards-display">${cards}</div>
-      ${r.interpretation?.notes?`<div class="text-sm text-muted mt-6">${esc(r.interpretation.notes)}</div>`:''}
-      ${rTags||flags?`<div class="tags-wrap mt-6">${rTags}${flags}</div>`:''}
-      ${valSection}
-    </div>
-  </div>`;
+  body.innerHTML = `
+    ${r.interpretation?.notes?`<div class="text-sm text-muted mt-8">${esc(r.interpretation.notes)}</div>`:''}
+    ${rTags||flags?`<div class="tags-wrap mt-6">${rTags}${flags}</div>`:''}
+    ${valSection}
+  `;
+  body.classList.add('open');
 }
+
 function openAddReadingForAsset() {
   showPage('readings'); populateAssetDropdown();
   const sel = document.getElementById('r-asset');
