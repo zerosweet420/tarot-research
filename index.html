@@ -968,6 +968,7 @@ function toast(msg, type = 'info') {
 
 // ── HELPERS ──────────────────────────────────────────────────
 function todayStr() { return new Date().toISOString().split('T')[0] }
+function dateStr(d) { return d.toISOString().split('T')[0] }
 function genId(p) { return p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5) }
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 function signalLabel(s) { return {bull:'📈 多',bear:'📉 空',neutral:'➡️ 中性',unclear:'❓ 不明'}[s]||s }
