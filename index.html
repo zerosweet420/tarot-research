@@ -340,7 +340,8 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .reading-group-count.hit{background:var(--mint)}
 .reading-group-count.partial{background:var(--amber)}
 .reading-group-count.miss{background:var(--text-light)}
-.reading-cards-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:10px}
+.reading-groups-row{display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;align-items:start}
+.reading-cards-grid{display:flex;flex-direction:column;gap:10px}
 
 .r-card{
   background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
@@ -381,6 +382,7 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   .watch-row-hdr span:nth-child(4),.watch-row-hdr span:nth-child(5),
   .val-item-hdr span:nth-child(4),.val-item-hdr span:nth-child(5){display:none}
   .asset-grid{grid-template-columns:1fr}
+  .reading-groups-row{grid-template-columns:1fr}
   .watch-cards-grid{grid-template-columns:1fr}
   .urgent-card{flex-direction:column;align-items:flex-start;gap:10px}
   .urgent-card-right{width:100%;justify-content:space-between}
@@ -1232,7 +1234,7 @@ function showAssetDetail(assetId) {
   S.currentAssetId = assetId;
   const asset = DB.assets.find(a=>a.id===assetId); if (!asset) return;
   document.getElementById('detail-header-title').textContent = `${asset.symbol} · ${asset.name}`;
-  const readings = DB.readings.filter(r=>r.asset_id===assetId).slice().reverse();
+  const readings = DB.readings.filter(r=>r.asset_id===assetId);
   const tags = (asset.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
 
   // Compact header
@@ -1257,6 +1259,12 @@ function showAssetDetail(assetId) {
     else groups.miss.push(r);
   });
 
+  // Sort: pending = soonest target_date first (most urgent); validated = most recent target_date first
+  groups.pending.sort((a, b) => (a.target_date || '9999').localeCompare(b.target_date || '9999'));
+  groups.hit.sort((a, b) => (b.target_date || '0000').localeCompare(a.target_date || '0000'));
+  groups.partial.sort((a, b) => (b.target_date || '0000').localeCompare(a.target_date || '0000'));
+  groups.miss.sort((a, b) => (b.target_date || '0000').localeCompare(a.target_date || '0000'));
+
   const groupMeta = {
     pending: { label: '⏳ 待驗證', icon: 'pending' },
     hit: { label: '✓ 命中', icon: 'hit' },
@@ -1264,16 +1272,16 @@ function showAssetDetail(assetId) {
     miss: { label: '✕ 未命中', icon: 'miss' }
   };
 
-  let groupsHtml = '';
+  let groupsHtml = '<div class="reading-groups-row">';
   for (const key of ['pending', 'hit', 'partial', 'miss']) {
     const items = groups[key];
-    if (!items.length) continue;
     const meta = groupMeta[key];
     groupsHtml += `<div class="reading-group">
       <div class="reading-group-label">${meta.label} <span class="reading-group-count ${meta.icon}">${items.length}</span></div>
-      <div class="reading-cards-grid">${items.map(r => readingCard(r, key)).join('')}</div>
+      <div class="reading-cards-grid">${items.length ? items.map(r => readingCard(r, key)).join('') : '<div class="text-light text-sm" style="padding:8px 2px">無</div>'}</div>
     </div>`;
   }
+  groupsHtml += '</div>';
 
   if (!readings.length) {
     groupsHtml = '<div class="empty-state"><div class="icon">🃏</div><h3>尚無占卜紀錄</h3></div>';
