@@ -243,6 +243,74 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .text-muted{color:var(--text-muted)}.text-light{color:var(--text-light)}
 .text-sm{font-size:12px}.bold{font-weight:600}.font-mono{font-family:monospace}
 
+/* ── DASHBOARD V2 ── */
+.urgent-card{
+  background:linear-gradient(135deg, var(--rose-light) 0%, var(--bg-card) 100%);
+  border:1px solid var(--rose);border-radius:var(--radius-lg);
+  padding:16px 20px;margin-bottom:10px;cursor:pointer;
+  transition:box-shadow .15s, transform .1s;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.urgent-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.urgent-card.due-today{border-color:var(--amber);background:linear-gradient(135deg, var(--amber-light) 0%, var(--bg-card) 100%)}
+.urgent-card-left{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.urgent-symbol{font-family:'Crimson Pro',serif;font-size:24px;font-weight:700;flex-shrink:0;min-width:70px}
+.urgent-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.urgent-card-name{font-size:12px;color:var(--text-muted)}
+.urgent-question{font-size:12.5px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}
+.urgent-card-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.countdown-badge{
+  font-family:'Crimson Pro',serif;font-weight:700;font-size:13px;
+  padding:6px 14px;border-radius:20px;white-space:nowrap;
+}
+.countdown-badge.today{background:var(--amber);color:#fff}
+.countdown-badge.tomorrow{background:var(--rose);color:#fff}
+.urgent-empty{
+  text-align:center;padding:24px;color:var(--text-light);
+  background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);
+  font-size:13px;
+}
+
+.watch-cards-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:12px}
+.watch-mini-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;transition:box-shadow .15s, border-color .15s;
+}
+.watch-mini-card:hover{box-shadow:var(--shadow-md);border-color:var(--lavender-mid)}
+.watch-mini-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.watch-mini-symbol{font-family:'Crimson Pro',serif;font-size:18px;font-weight:700}
+.watch-mini-name{font-size:11px;color:var(--text-light);margin-top:1px}
+.watch-mini-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:8px}
+.watch-mini-hitrate{font-weight:600}
+.watch-mini-hitrate.good{color:var(--mint)}
+.watch-mini-hitrate.mid{color:var(--amber)}
+.watch-mini-hitrate.low{color:var(--rose)}
+.card-sequence{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.seq-chip{
+  font-size:10px;padding:2px 6px;border-radius:4px;
+  background:var(--lavender-light);color:var(--lavender);white-space:nowrap;
+}
+.seq-chip.rev{background:var(--rose-light);color:var(--rose)}
+.seq-chip.hit-outline{box-shadow:inset 0 0 0 1.5px var(--mint)}
+.seq-chip.miss-outline{box-shadow:inset 0 0 0 1.5px var(--rose)}
+
+.top-card-row{
+  display:grid;grid-template-columns:32px 1fr 70px 70px;align-items:center;gap:10px;
+  padding:9px 4px;border-bottom:1px solid var(--border-light);font-size:13px;
+}
+.top-card-row:last-child{border-bottom:none}
+.top-card-rank{
+  font-family:'Crimson Pro',serif;font-weight:700;font-size:15px;color:var(--text-light);text-align:center;
+}
+.top-card-rank.r1{color:#d4a76a}
+.top-card-rank.r2{color:#a89f96}
+.top-card-rank.r3{color:#c4915a}
+.top-card-name{font-weight:600}
+.top-card-rate{font-weight:700;text-align:right}
+.top-card-rate.good{color:var(--mint)}
+.top-card-rate.mid{color:var(--amber)}
+.top-card-count{color:var(--text-light);text-align:right;font-size:11px}
+
 /* ── MOBILE RESPONSIVE ── */
 #nav-overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.4);z-index:99}
 #nav-overlay.open{display:block}
@@ -265,6 +333,10 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   .watch-row-hdr span:nth-child(4),.watch-row-hdr span:nth-child(5),
   .val-item-hdr span:nth-child(4),.val-item-hdr span:nth-child(5){display:none}
   .asset-grid{grid-template-columns:1fr}
+  .watch-cards-grid{grid-template-columns:1fr}
+  .urgent-card{flex-direction:column;align-items:flex-start;gap:10px}
+  .urgent-card-right{width:100%;justify-content:space-between}
+  .urgent-question{max-width:200px}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .card-stat-row.hdr{display:none}
   .modal{max-width:94vw;margin:0 8px}
@@ -322,32 +394,24 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
     <div class="page-header">
       <h2>Dashboard</h2>
       <div class="page-header-actions">
-        <div class="date-nav">
-          <button onclick="shiftDate(-1)">‹</button>
-          <span class="date-display" id="dash-date-display"></span>
-          <button onclick="shiftDate(1)">›</button>
-          <button onclick="resetDate()" class="btn btn-sm btn-secondary">今日</button>
-        </div>
-        <select class="form-select btn-sm" id="dash-sort" onchange="renderWatchList()" style="width:auto;padding:4px 8px;font-size:12px">
-          <option value="status">排序：狀態優先</option>
-          <option value="target_asc">Target 日期 ↑</option>
-          <option value="target_desc">Target 日期 ↓</option>
-          <option value="draw_desc">抽牌日 ↓</option>
-          <option value="asset">標的名稱</option>
-        </select>
         <button class="btn btn-sm btn-ghost" onclick="syncFromDrive()" title="重新從 Drive 同步">↻ 同步</button>
       </div>
     </div>
     <div class="page-content">
-      <div class="card mb-16">
-        <div class="card-header"><h3>📌 Watch 關注清單</h3><span class="text-sm text-light" id="watch-count"></span></div>
-        <div class="watch-row-hdr"><span>標的</span><span>問題</span><span>信號</span><span>抽牌日</span><span>Target</span><span>狀態</span></div>
-        <div id="watch-list-body"></div>
-      </div>
+
+      <!-- 🔥 急迫區：今日/明日到期 -->
+      <div id="urgent-section" class="mb-16"></div>
+
+      <!-- 📊 Watch 標的速覽卡片 -->
+      <div class="section-label">📊 Watch 關注標的</div>
+      <div id="watch-cards-grid" class="watch-cards-grid mb-16"></div>
+
+      <!-- 🏆 牌意準確率 Top 5 -->
       <div class="card">
-        <div class="card-header"><h3>🧪 Research Models 進展</h3><button class="btn btn-sm btn-ghost" onclick="showPage('models')">查看全部 →</button></div>
-        <div class="card-body" id="dashboard-models"></div>
+        <div class="card-header"><h3>🏆 驗證準確率 Top 5（牌意）</h3><button class="btn btn-sm btn-ghost" onclick="showPage('explorer')">查看全部 →</button></div>
+        <div class="card-body" id="dashboard-top-cards"></div>
       </div>
+
     </div>
   </div>
 
@@ -922,101 +986,154 @@ function updateStats() {
 }
 function renderAll() { renderDashboard(); renderAssets(); renderValidation(); renderModels(); renderExplorer() }
 
-// ── DASHBOARD ─────────────────────────────────────────────────
-function updateDashDateDisplay() {
-  const d = S.dashDate;
-  const el = document.getElementById('dash-date-display');
-  if (el) el.textContent = `${d.getMonth()+1}/${d.getDate()}`;
-}
-function shiftDate(d) { S.dashDate.setDate(S.dashDate.getDate()+d); updateDashDateDisplay(); renderDashboard() }
-function resetDate() { S.dashDate = new Date(); updateDashDateDisplay(); renderDashboard() }
-
+// ── DASHBOARD V2 ─────────────────────────────────────────────
 function renderDashboard() {
-  updateDashDateDisplay();
-  renderWatchList();
-  renderDashModels();
+  renderUrgentSection();
+  renderWatchCards();
+  renderTopAccuracyCards();
 }
 
-function renderWatchList() {
-  const body = document.getElementById('watch-list-body');
-  const countEl = document.getElementById('watch-count');
-  if (!body) return;
+// 🔥 急迫區：今日/明日到期，且尚未驗證
+function renderUrgentSection() {
+  const el = document.getElementById('urgent-section');
+  if (!el) return;
   const today = todayStr();
-  // FIX 3: only show readings for 'watch' priority assets
-  const watchAssetIds = new Set(DB.assets.filter(a => (a.priority||'watch') === 'watch').map(a => a.id));
-  let rows = DB.readings.map(r => ({
-    r, asset: DB.assets.find(a => a.id === r.asset_id),
-    val: DB.validations.find(v => v.reading_id === r.id)
-  })).filter(x => x.asset && watchAssetIds.has(x.asset.id));
+  const tomorrow = dateStr(new Date(Date.now() + 86400000));
 
-  const sortMode = document.getElementById('dash-sort')?.value || 'status';
-  const sp = ({r, val}) => {
-    if (val) return 3;
-    const td = r.target_date;
-    if (!td) return 2;
-    if (td < today) return 0;
-    if (td === today) return 1;
-    return 2;
-  };
-  if (sortMode === 'status') {
-    rows.sort((a,b) => sp(a)-sp(b) || (a.r.target_date||'9999').localeCompare(b.r.target_date||'9999'));
-  } else if (sortMode === 'target_asc') {
-    rows.sort((a,b) => (a.r.target_date||'9000').localeCompare(b.r.target_date||'0000'));
-  } else if (sortMode === 'target_desc') {
-    rows.sort((a,b) => (b.r.target_date||'0000').localeCompare(a.r.target_date||'9000'));
-  } else if (sortMode === 'draw_desc') {
-    rows.sort((a,b) => (b.r.date||'0000').localeCompare(a.r.date||'0000'));
-  } else if (sortMode === 'asset') {
-    rows.sort((a,b) => (a.asset.name||a.asset.symbol).localeCompare(b.asset.name||b.asset.symbol));
-  }
+  const urgent = DB.readings
+    .map(r => ({ r, asset: DB.assets.find(a => a.id === r.asset_id), val: DB.validations.find(v => v.reading_id === r.id) }))
+    .filter(x => x.asset && !x.val && x.r.target_date && (x.r.target_date === today || x.r.target_date === tomorrow))
+    .sort((a, b) => a.r.target_date.localeCompare(b.r.target_date));
 
-  const pending = rows.filter(x => !x.val).length;
-  if (countEl) countEl.textContent = `${pending} 筆觀察中 · 共 ${rows.length} 筆`;
-
-  if (!rows.length) {
-    body.innerHTML = '<div class="empty-state"><div class="icon">📌</div><h3>尚無占卜紀錄</h3></div>';
+  if (!urgent.length) {
+    el.innerHTML = '<div class="urgent-empty">🎉 今天和明天沒有急迫到期的占卜紀錄</div>';
     return;
   }
-  body.innerHTML = rows.map(({r, asset, val}) => {
-    const td = r.target_date;
-    let rc = 'watching';
-    if (val) rc = 'validated';
-    else if (td && td < today) rc = 'overdue';
-    else if (td === today) rc = 'today';
+
+  el.innerHTML = urgent.map(({ r, asset }) => {
+    const isToday = r.target_date === today;
+    const cards = (r.cards || []).map(c => `${c.card}${c.orientation === 'reversed' ? '逆' : '正'}`).join('、');
     const signal = r.signal?.trend || 'unclear';
-    const stBadge = val
-      ? `<span class="badge badge-${val.accuracy}">${accuracyLabel(val.accuracy)}</span>`
-      : rc === 'overdue' ? `<span class="badge" style="background:var(--rose-light);color:var(--rose)">超期</span>`
-      : rc === 'today' ? `<span class="badge" style="background:var(--amber-light);color:var(--amber)">今日</span>`
-      : `<span class="badge badge-neutral">觀察中</span>`;
-    return `<div class="watch-row ${rc}" onclick="showAssetDetail('${asset.id}')">
-      <span class="symbol-cell" style="font-size:13px;font-weight:600">${esc(asset.name||asset.symbol)}</span>
-      <span class="text-muted text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.question||'—')}</span>
-      <span><span class="badge badge-${signal}">${signalLabel(signal)}</span></span>
-      <span class="text-muted">${r.date||'—'}</span>
-      <span class="text-muted ${rc==='overdue'?'bold':''}" style="${rc==='overdue'?'color:var(--rose)':rc==='today'?'color:var(--amber)':''}">${td||'—'}</span>
-      <span>${stBadge}</span>
+    return `<div class="urgent-card ${isToday ? 'due-today' : ''}" onclick="showAssetDetail('${asset.id}')">
+      <div class="urgent-card-left">
+        <span class="urgent-symbol">${esc(asset.symbol)}</span>
+        <div class="urgent-info">
+          <span class="urgent-card-name">${esc(asset.name)} · ${esc(cards)}</span>
+          <span class="urgent-question">${esc(r.question || '')}</span>
+        </div>
+      </div>
+      <div class="urgent-card-right">
+        <span class="badge badge-${signal}">${signalLabel(signal)}</span>
+        <span class="countdown-badge ${isToday ? 'today' : 'tomorrow'}">${isToday ? '🔥 今天到期' : '⏰ 明天到期'}</span>
+      </div>
     </div>`;
   }).join('');
 }
 
-function renderDashModels() {
-  const el = document.getElementById('dashboard-models'); if (!el) return;
-  const active = DB.models.filter(m => m.status !== 'deprecated').slice(0, 6);
-  if (!active.length) { el.innerHTML = '<div class="text-light text-sm">尚無 active models</div>'; return; }
-  el.innerHTML = active.map((m,i) => {
-    const ev = (m.evidence_reading_ids||[]).length;
-    const prog = Math.min(100, ev * 10);
-    return `${i>0?'<hr class="div">':''}<div style="cursor:pointer" onclick="showPage('models')">
-      <div class="flex items-center justify-between mb-4">
-        <span class="bold" style="font-size:13.5px">${esc(m.name)}</span>
-        <div class="flex gap-6">${catBadge(m.category)}<span class="badge badge-${m.status}">${m.status}</span></div>
+// 📊 Watch 標的速覽卡片
+function renderWatchCards() {
+  const el = document.getElementById('watch-cards-grid');
+  if (!el) return;
+  const watchAssets = DB.assets.filter(a => (a.priority || 'watch') === 'watch');
+
+  if (!watchAssets.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><h3>尚無 Watch 標的</h3><p>到標的管理新增並設定優先級為 Watch</p></div>';
+    return;
+  }
+
+  const cards = watchAssets.map(asset => {
+    const readings = DB.readings.filter(r => r.asset_id === asset.id).slice().sort((a, b) => (a.target_date || '').localeCompare(b.target_date || ''));
+    const validatedReadings = readings.filter(r => DB.validations.find(v => v.reading_id === r.id));
+    const hits = validatedReadings.filter(r => DB.validations.find(v => v.reading_id === r.id)?.accuracy === 'hit').length;
+    const hitRate = validatedReadings.length ? Math.round(hits / validatedReadings.length * 100) : null;
+
+    // Latest reading (most recent target_date with a value, prefer not-yet-validated/future)
+    const today = todayStr();
+    const upcoming = readings.filter(r => r.target_date && r.target_date >= today);
+    const latest = upcoming.length ? upcoming[0] : readings[readings.length - 1];
+
+    const signal = latest?.signal?.trend || 'unclear';
+    const nextDate = latest?.target_date || '—';
+
+    // Last 5 cards sequence (most recent by target_date)
+    const recent5 = readings.slice(-5);
+    const seqHtml = recent5.map(r => {
+      const val = DB.validations.find(v => v.reading_id === r.id);
+      const card = r.cards?.[0];
+      if (!card) return '';
+      const orientCls = card.orientation === 'reversed' ? 'rev' : '';
+      const outlineCls = val ? (val.accuracy === 'hit' ? 'hit-outline' : val.accuracy === 'miss' ? 'miss-outline' : '') : '';
+      return `<span class="seq-chip ${orientCls} ${outlineCls}" title="${r.target_date||''}">${esc(card.card)}</span>`;
+    }).join('');
+
+    const rateClass = hitRate === null ? '' : hitRate >= 70 ? 'good' : hitRate >= 40 ? 'mid' : 'low';
+
+    return `<div class="watch-mini-card" onclick="showAssetDetail('${asset.id}')">
+      <div class="watch-mini-top">
+        <div>
+          <div class="watch-mini-symbol">${esc(asset.symbol)}</div>
+          <div class="watch-mini-name">${esc(asset.name)}</div>
+        </div>
+        <span class="badge badge-${signal}">${signalLabel(signal)}</span>
       </div>
-      ${m.hypothesis?`<div class="text-sm text-muted mb-4">${esc(m.hypothesis.slice(0,90))}${m.hypothesis.length>90?'…':''}</div>`:''}
-      <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
-      <div class="text-sm text-light mt-4">佐證 ${ev} 筆 · 反例 ${(m.counter_evidence_ids||[]).length} 筆</div>
+      <div class="watch-mini-row">
+        <span>下次到期：${nextDate}</span>
+        <span class="watch-mini-hitrate ${rateClass}">${hitRate !== null ? hitRate + '%' : '尚無驗證'}</span>
+      </div>
+      ${seqHtml ? `<div class="card-sequence">${seqHtml}</div>` : ''}
     </div>`;
   }).join('');
+
+  el.innerHTML = cards;
+}
+
+// 🏆 驗證準確率 Top 5（依牌名統計）
+function renderTopAccuracyCards() {
+  const el = document.getElementById('dashboard-top-cards');
+  if (!el) return;
+
+  const cardStats = {};
+  DB.readings.forEach(r => {
+    const val = DB.validations.find(v => v.reading_id === r.id);
+    if (!val) return;
+    (r.cards || []).forEach(c => {
+      if (!c.card) return;
+      if (!cardStats[c.card]) cardStats[c.card] = { hit: 0, total: 0 };
+      cardStats[c.card].total++;
+      if (val.accuracy === 'hit') cardStats[c.card].hit++;
+    });
+  });
+
+  const ranked = Object.entries(cardStats)
+    .map(([name, s]) => ({ name, hit: s.hit, total: s.total, rate: s.total ? s.hit / s.total : 0 }))
+    .filter(c => c.total >= 2) // 至少驗證2次才有統計意義
+    .sort((a, b) => b.rate - a.rate || b.total - a.total)
+    .slice(0, 5);
+
+  if (!ranked.length) {
+    el.innerHTML = '<div class="text-light text-sm" style="padding:8px 4px">尚無足夠驗證資料（需至少2次驗證才會列入統計）</div>';
+    return;
+  }
+
+  el.innerHTML = ranked.map((c, i) => {
+    const pct = Math.round(c.rate * 100);
+    const rankCls = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+    const rateCls = pct >= 70 ? 'good' : pct >= 40 ? 'mid' : '';
+    return `<div class="top-card-row" onclick="goToCardExplorer('${esc(c.name)}')" style="cursor:pointer">
+      <span class="top-card-rank ${rankCls}">${i + 1}</span>
+      <span class="top-card-name">${esc(c.name)}</span>
+      <span class="top-card-rate ${rateCls}">${pct}%</span>
+      <span class="top-card-count">${c.hit}/${c.total} 次</span>
+    </div>`;
+  }).join('');
+}
+
+function goToCardExplorer(cardName) {
+  showPage('explorer');
+  setTimeout(() => {
+    const input = document.getElementById('explorer-search');
+    if (input) { input.value = cardName; renderExplorer(); }
+  }, 50);
 }
 
 // ── ASSETS ────────────────────────────────────────────────────
