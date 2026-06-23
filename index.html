@@ -278,14 +278,6 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 }
 .watch-mini-card:hover{box-shadow:var(--shadow-md);border-color:var(--lavender-mid)}
 .watch-mini-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.key-action-icon{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:22px;height:22px;border-radius:50%;font-size:12px;flex-shrink:0;
-  cursor:help;
-}
-.key-action-icon.buy{background:var(--mint-light);color:var(--mint)}
-.key-action-icon.sell{background:var(--rose-light);color:var(--rose)}
-.watch-mini-symbol-row{display:flex;align-items:center;gap:6px}
 .watch-mini-symbol{font-family:'Crimson Pro',serif;font-size:18px;font-weight:700}
 .watch-mini-name{font-size:11px;color:var(--text-light);margin-top:1px}
 .watch-mini-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:8px}
@@ -572,14 +564,6 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
           </div>
         </div>
         <div class="form-group"><label class="form-label">問題</label><input type="text" class="form-input" id="r-question" placeholder="例：下週走勢方向？"></div>
-        <div class="form-group">
-          <label class="form-label">關鍵買賣點標記</label>
-          <select class="form-select" id="r-key-action">
-            <option value="">無（自動建議或不標記）</option>
-            <option value="buy">🔵 關鍵買入機會日</option>
-            <option value="sell">🔴 關鍵賣出機會日</option>
-          </select>
-        </div>
         <div class="section-label">牌組</div>
         <div id="cards-container"></div>
         <button class="btn btn-secondary btn-sm mt-4" onclick="addCardEntry()">＋ 新增一張牌</button>
@@ -713,15 +697,6 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
         </div>
       </div>
       <div class="form-group"><label class="form-label">問題</label><input type="text" class="form-input" id="re-question"></div>
-      <div class="form-group">
-        <label class="form-label">關鍵買賣點標記</label>
-        <select class="form-select" id="re-key-action">
-          <option value="">無（自動建議或不標記）</option>
-          <option value="buy">🔵 關鍵買入機會日</option>
-          <option value="sell">🔴 關鍵賣出機會日</option>
-          <option value="none">明確標記為「無」（蓋掉自動建議）</option>
-        </select>
-      </div>
       <div class="section-label">牌組</div>
       <div id="re-cards-container"></div>
       <button class="btn btn-secondary btn-sm mt-4" onclick="addReCardEntry()">＋ 新增一張牌</button>
@@ -1150,40 +1125,6 @@ function renderUrgentSection() {
 }
 
 // 📊 Watch 標的速覽卡片
-// ── KEY ACTION (買點/賣點 remark) ─────────────────────────────
-// Manual override stored in reading.interpretation.key_action ('buy'|'sell'|'none')
-// Falls back to auto-suggestion based on signal trend reversal pattern
-function getKeyAction(asset, sortedReadings, latestReading) {
-  const today = todayStr();
-
-  // 1. Manual override — only honor it if the reading's target_date is today or in the future.
-  //    A manually-tagged PAST reading should not keep showing the icon on the card.
-  const isRelevant = latestReading?.target_date && latestReading.target_date >= today;
-  if (isRelevant) {
-    if (latestReading?.interpretation?.key_action === 'buy') return 'buy';
-    if (latestReading?.interpretation?.key_action === 'sell') return 'sell';
-    if (latestReading?.interpretation?.key_action === 'none') return null;
-  }
-
-  // 2. Auto-suggest: look at the last 3 by-day readings (time_horizon='1D') with target_date <= today
-  // Pattern: if recent trend was bear/bear and now flips to bull => potential buy point (反轉向上)
-  //          if recent trend was bull/bull and now flips to bear => potential sell point (反轉向下)
-  const dailyReadings = sortedReadings.filter(r => r.time_horizon === '1D' && r.target_date);
-  const recentDaily = dailyReadings.filter(r => r.target_date <= today).slice(-3);
-  if (recentDaily.length < 2) return null;
-
-  const trends = recentDaily.map(r => r.signal?.trend);
-  const last = trends[trends.length - 1];
-  const prev = trends.slice(0, -1);
-
-  const prevAllBear = prev.length && prev.every(t => t === 'bear');
-  const prevAllBull = prev.length && prev.every(t => t === 'bull');
-
-  if (prevAllBear && last === 'bull') return 'buy';
-  if (prevAllBull && last === 'bear') return 'sell';
-  return null;
-}
-
 function renderWatchCards() {
   const el = document.getElementById('watch-cards-grid');
   if (!el) return;
@@ -1201,19 +1142,15 @@ function renderWatchCards() {
     const hitRate = validatedReadings.length ? Math.round(hits / validatedReadings.length * 100) : null;
 
     // Only consider daily (1D) readings for signal direction, next due date, and card sequence —
-    // monthly/weekly overview readings are excluded to keep the card consistent and not misleading
+    // monthly/weekly overview readings are excluded to keep the card consistent
     const dailyOnly = readings.filter(r => r.time_horizon === '1D');
 
-    // Latest daily reading (soonest upcoming, otherwise most recent past)
+    // Next due reading (soonest upcoming, otherwise most recent past) — used for both signal and "下次到期"
     const today = todayStr();
     const upcomingDaily = dailyOnly.filter(r => r.target_date && r.target_date >= today);
     const latest = upcomingDaily.length ? upcomingDaily[0] : dailyOnly[dailyOnly.length - 1];
-
     const signal = latest?.signal?.trend || 'unclear';
     const nextDate = latest?.target_date || '—';
-
-    // Key action: manual override takes priority, otherwise auto-suggest
-    const keyAction = getKeyAction(asset, readings, latest);
 
     // Last 5 cards sequence — only from daily (1D) single-card readings,
     // excluding monthly/weekly overview readings which have multiple cards bundled together
@@ -1229,20 +1166,11 @@ function renderWatchCards() {
 
     const rateClass = hitRate === null ? '' : hitRate >= 70 ? 'good' : hitRate >= 40 ? 'mid' : 'low';
 
-    const actionIcon = keyAction === 'buy'
-      ? `<span class="key-action-icon buy" title="關鍵買入機會日">🔵</span>`
-      : keyAction === 'sell'
-        ? `<span class="key-action-icon sell" title="關鍵賣出機會日">🔴</span>`
-        : '';
-
     return `<div class="watch-mini-card" onclick="showAssetDetail('${asset.id}')">
       <div class="watch-mini-top">
-        <div class="watch-mini-symbol-row">
-          <div>
-            <div class="watch-mini-symbol">${esc(asset.symbol)}</div>
-            <div class="watch-mini-name">${esc(asset.name)}</div>
-          </div>
-          ${actionIcon}
+        <div>
+          <div class="watch-mini-symbol">${esc(asset.symbol)}</div>
+          <div class="watch-mini-name">${esc(asset.name)}</div>
         </div>
         <span class="badge badge-${signal}">${signalLabel(signal)}</span>
       </div>
@@ -1541,7 +1469,7 @@ async function saveReading() {
     time_horizon: document.getElementById('r-horizon').value,
     question: document.getElementById('r-question').value.trim(),
     spread_type: document.getElementById('r-spread').value,
-    cards, interpretation:{summary:'',notes:document.getElementById('r-notes').value.trim(),key_action:document.getElementById('r-key-action').value||null},
+    cards, interpretation:{summary:'',notes:document.getElementById('r-notes').value.trim()},
     signal:{trend:selectedSignal||'unclear',status:null,trade_type:null},
     flags:[], research_tags:[], source:'manual', legacy_id:'', created_at:date, updated_at:date };
   DB.readings.push(r);
@@ -1555,7 +1483,6 @@ function resetReadingForm() {
   document.getElementById('r-date').value=todayStr();
   document.getElementById('r-target-date').value='';
   document.getElementById('r-question').value='';
-  document.getElementById('r-key-action').value='';
   document.getElementById('r-notes').value='';
   document.getElementById('cards-container').innerHTML='';
   selectedSignal=null;
@@ -1950,7 +1877,6 @@ function openEditReading(readingId) {
   document.getElementById('re-horizon').value = r.time_horizon||'1W';
   document.getElementById('re-signal').value = r.signal?.trend||'unclear';
   document.getElementById('re-question').value = r.question||'';
-  document.getElementById('re-key-action').value = r.interpretation?.key_action||'';
   document.getElementById('re-notes').value = r.interpretation?.notes||'';
   // populate cards
   const cc = document.getElementById('re-cards-container');
@@ -1985,7 +1911,7 @@ async function saveEditReading() {
     signal:{...DB.readings[idx].signal,trend:document.getElementById('re-signal').value},
     question:document.getElementById('re-question').value.trim(),
     cards,
-    interpretation:{...DB.readings[idx].interpretation,notes:document.getElementById('re-notes').value.trim(),key_action:document.getElementById('re-key-action').value||null},
+    interpretation:{...DB.readings[idx].interpretation,notes:document.getElementById('re-notes').value.trim()},
     updated_at:todayStr()
   };
   closeModal('modal-reading');
