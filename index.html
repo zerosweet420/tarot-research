@@ -1976,6 +1976,7 @@ async function importBackup(input) {
       const d=JSON.parse(e.target.result);
       if(d.assets)DB.assets=d.assets; if(d.readings)DB.readings=d.readings;
       if(d.validations)DB.validations=d.validations; if(d.models)DB.models=d.models;
+      if(d.card_reference)DB.card_reference=d.card_reference;
       renderAll(); updateStats(); toast('匯入成功，正在同步到 Drive…','info');
       for(const entity of FILE_NAMES) await saveToDrive(entity);
       toast('已同步到 Drive','success');
