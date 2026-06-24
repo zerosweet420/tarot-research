@@ -789,10 +789,10 @@ hr.div{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <script>
 const CLIENT_ID = '155442549096-e1p3951gb1e2u868e9pkrh16qaqp35qp.apps.googleusercontent.com';
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const FILE_NAMES = ['assets','readings','validations','models'];
+const FILE_NAMES = ['assets','readings','validations','models','card_reference'];
 
 // ── STATE ────────────────────────────────────────────────────
-let DB = { assets:[], readings:[], validations:[], models:[] };
+let DB = { assets:[], readings:[], validations:[], models:[], card_reference:[] };
 let S = {
   driveToken: null,
   tokenExpiry: null,
@@ -913,7 +913,7 @@ async function syncFromDrive() {
   }
   updateStats();
   if (loaded === 0) toast('Drive 上尚無數據檔案', 'info');
-  else toast(`已同步 ${loaded}/4 個數據檔`, 'success');
+  else toast(`已同步 ${loaded}/${FILE_NAMES.length} 個數據檔`, 'success');
   // Refresh current page
   renderAll();
 }
@@ -1770,11 +1770,14 @@ function explorerCard(s) {
     </div>`;
   }).join('');
 
+  const refRow = explorerCardReferenceRow(s.cardName);
+
   return `<div class="explorer-card" onclick="toggleExplorerCard('${cardId}')">
     <div class="explorer-card-top">
       <span class="explorer-card-name">${esc(s.cardName)}</span>
       <span class="explorer-card-count">${s.readings.length} 次出現</span>
     </div>
+    ${refRow}
     <div class="explorer-card-rate-row">
       <span class="explorer-card-rate ${rateCls}">${pct !== null ? pct + '%' : '尚無驗證'}</span>
       <div class="explorer-card-orient">
@@ -1786,6 +1789,34 @@ function explorerCard(s) {
     <div class="text-sm text-light">已驗證 ${s.validatedTotal} 次（命中${s.hit}・部分${s.partial}・未中${s.miss}）</div>
     <div class="explorer-detail-panel" id="${cardId}">${detailRows || '<div class="text-light text-sm" style="padding:6px 0">尚無紀錄</div>'}</div>
   </div>`;
+}
+
+// 從 card_reference 牌庫字典查出這張牌的結構屬性，組成一行小字顯示在卡片標題下方
+const REVERSAL_SHIFT_LABEL = {
+  direct: '直接釋放', blocked: '受阻', delayed: '延遲', internalized: '內化', excessive: '過度', context_dependent: '依情境而定'
+};
+const COURT_ROLE_LABEL = { page: '侍從', knight: '騎士', queen: '皇后', king: '國王' };
+const NUMEROLOGY_LABEL = {
+  initiation: '起始', duality: '抉擇', growth: '成長', structure: '結構', conflict: '衝突',
+  adjustment: '調整', assessment: '評估', momentum: '動能', culmination: '高點', completion: '完成'
+};
+function explorerCardReferenceRow(cardName) {
+  const ref = (DB.card_reference || []).find(c => c.card_name === cardName);
+  if (!ref) return '';
+  const parts = [];
+  if (ref.card_type === 'major') {
+    parts.push('大牌');
+  } else if (ref.card_type === 'minor_number') {
+    parts.push('小牌・' + (NUMEROLOGY_LABEL[ref.numerology_stage] || ref.numerology_stage || ''));
+  } else if (ref.card_type === 'court') {
+    parts.push('宮廷牌・' + (COURT_ROLE_LABEL[ref.court_role] || ref.court_role || ''));
+  }
+  if (ref.typical_reversal_tendency) {
+    const label = REVERSAL_SHIFT_LABEL[ref.typical_reversal_tendency] || ref.typical_reversal_tendency;
+    parts.push(`逆位常見：${label}${ref.reversal_evidence_count ? `（${ref.reversal_evidence_count}筆證據）` : ''}`);
+  }
+  if (!parts.length) return '';
+  return `<div class="text-sm text-light" style="margin:2px 0 4px;font-size:11px">${parts.join('　|　')}</div>`;
 }
 
 function toggleExplorerCard(cardId) {
@@ -1933,7 +1964,7 @@ async function deleteReading() {
 
 // ── EXPORT / IMPORT ───────────────────────────────────────────
 function exportAll() {
-  const blob = new Blob([JSON.stringify({assets:DB.assets,readings:DB.readings,validations:DB.validations,models:DB.models},null,2)],{type:'application/json'});
+  const blob = new Blob([JSON.stringify({assets:DB.assets,readings:DB.readings,validations:DB.validations,models:DB.models,card_reference:DB.card_reference},null,2)],{type:'application/json'});
   dl(blob,`tarot_backup_${todayStr()}.json`); toast('備份匯出成功','success');
 }
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
